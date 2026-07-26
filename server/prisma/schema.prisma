@@ -1,0 +1,137 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Role {
+  id          String     @id @default(uuid())
+  code        String     @unique
+  displayName String
+  createdAt   DateTime   @default(now())
+  employees   Employee[]
+
+  @@map("roles")
+}
+
+model Branch {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expenses  Expense[]
+
+  @@map("branches")
+}
+
+model ExpenseCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  expenses    Expense[]
+
+  @@map("expense_categories")
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  name        String
+  value       Decimal         @db.Decimal(12, 2)
+  date        DateTime        @db.Date
+  receiptUrl  String?
+  branchId    String
+  categoryId  String
+  createdById String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  branch      Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdBy   Employee?       @relation("CreatedExpenses", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([branchId, date])
+  @@index([categoryId, date])
+  @@map("expenses")
+}
+
+model Employee {
+  id                String          @id @default(uuid())
+  firstName         String
+  lastName          String
+  phone             String?         @unique
+  passwordHash      String?
+  isActive          Boolean         @default(true)
+  roleId            String
+  defaultBaseSalary Decimal?        @db.Decimal(12, 2)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  role              Role            @relation(fields: [roleId], references: [id])
+  salaries          MonthlySalary[]
+  advancesTaken     SalaryAdvance[] @relation("EmployeeAdvances")
+  advancesApproved  SalaryAdvance[] @relation("ApprovedAdvances")
+  shiftsCovered     OneTimeShift[]  @relation("CoveringEmployee")
+  shiftsAbsent      OneTimeShift[]  @relation("AbsentEmployee")
+  shiftsApproved    OneTimeShift[]  @relation("ApprovedShifts")
+  expensesCreated   Expense[]       @relation("CreatedExpenses")
+
+  @@map("employees")
+}
+
+model SalaryAdvance {
+  id           String    @id @default(uuid())
+  amount       Decimal   @db.Decimal(12, 2)
+  date         DateTime  @db.Date
+  reason       String?
+  status       String    @default("PENDING")
+  isDeducted   Boolean   @default(false)
+  employeeId   String
+  approvedById String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  employee     Employee  @relation("EmployeeAdvances", fields: [employeeId], references: [id], onDelete: Cascade)
+  approvedBy   Employee? @relation("ApprovedAdvances", fields: [approvedById], references: [id])
+
+  @@map("salary_advances")
+}
+
+model OneTimeShift {
+  id                 String    @id @default(uuid())
+  date               DateTime  @db.Date
+  amount             Decimal   @db.Decimal(12, 2)
+  description        String?
+  status             String    @default("PENDING")
+  coveringEmployeeId String
+  absentEmployeeId   String
+  approvedById       String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  coveringEmployee   Employee  @relation("CoveringEmployee", fields: [coveringEmployeeId], references: [id], onDelete: Cascade)
+  absentEmployee     Employee  @relation("AbsentEmployee", fields: [absentEmployeeId], references: [id], onDelete: Cascade)
+  approvedBy         Employee? @relation("ApprovedShifts", fields: [approvedById], references: [id])
+
+  @@map("one_time_shifts")
+}
+
+model MonthlySalary {
+  id                     String    @id @default(uuid())
+  month                  Int
+  year                   Int
+  baseSalary             Decimal   @db.Decimal(12, 2)
+  totalAdditions         Decimal   @default(0.00) @db.Decimal(12, 2)
+  totalShiftDeductions   Decimal   @default(0.00) @db.Decimal(12, 2)
+  totalAdvanceDeductions Decimal   @default(0.00) @db.Decimal(12, 2)
+  finalPayout            Decimal   @db.Decimal(12, 2)
+  isPaid                 Boolean   @default(false)
+  paidAt                 DateTime?
+  employeeId             String
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  employee               Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, month, year])
+  @@map("monthly_salaries")
+}
