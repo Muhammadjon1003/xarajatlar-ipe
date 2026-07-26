@@ -18,7 +18,7 @@ export const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-semibold">
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center text-zinc-400 font-semibold">
         Tizim yuklanmoqda...
       </div>
     );
@@ -54,7 +54,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex text-slate-100">
+    <div className="min-h-screen bg-[#09090b] flex text-zinc-100">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="flex-1 ml-64 p-8 min-h-screen max-w-[calc(100vw-16rem)] overflow-x-hidden">
         {renderContent()}

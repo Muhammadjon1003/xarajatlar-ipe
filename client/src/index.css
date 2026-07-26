@@ -2,7 +2,7 @@
 
 @layer base {
   body {
-    background-color: #121212;
+    background-color: #09090b;
     color: #f4f4f5;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     min-height: 100vh;
@@ -16,7 +16,7 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #121212;
+  background: #09090b;
 }
 ::-webkit-scrollbar-thumb {
   background: #27272a;

@@ -34,9 +34,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   ];
 
   return (
-    <aside className="w-64 h-screen fixed left-0 top-0 bg-zinc-950 border-r border-zinc-800/80 flex flex-col p-5 z-40">
+    <aside className="w-64 h-screen fixed left-0 top-0 bg-[#121215] border-r border-zinc-800/60 flex flex-col p-5 z-40">
       {/* Brand Logo */}
-      <div className="flex items-center gap-3 pb-5 mb-5 border-b border-zinc-800/80">
+      <div className="flex items-center gap-3 pb-5 mb-5 border-b border-zinc-800/60">
         <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-zinc-950 font-bold shadow-sm">
           <TrendingDown size={22} className="text-zinc-950" />
         </div>
@@ -71,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       </nav>
 
       {/* Active User Info Banner */}
-      <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-between">
+      <div className="pt-4 border-t border-zinc-800/60 flex items-center justify-between">
         <div className="overflow-hidden">
           <p className="text-xs font-bold text-white truncate">
             {user?.firstName} {user?.lastName}

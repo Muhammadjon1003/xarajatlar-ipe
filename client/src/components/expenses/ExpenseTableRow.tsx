@@ -16,21 +16,21 @@ export const ExpenseTableRow: React.FC<ExpenseTableRowProps> = ({
   onDelete,
 }) => {
   return (
-    <tr className="hover:bg-slate-800/40 transition-colors">
-      <td className="px-5 py-3.5 font-semibold text-slate-100">{expense.name}</td>
-      <td className="px-5 py-3.5 font-extrabold text-rose-400 text-base">
+    <tr className="hover:bg-zinc-800/40 transition-colors">
+      <td className="px-5 py-3.5 font-semibold text-zinc-100">{expense.name}</td>
+      <td className="px-5 py-3.5 font-extrabold text-orange-400 text-base">
         {formatUZS(expense.value)}
       </td>
       <td className="px-5 py-3.5">
         <Badge status={expense.category?.name || 'Xarajat'} />
       </td>
-      <td className="px-5 py-3.5 text-slate-300">{expense.branch?.name}</td>
-      <td className="px-5 py-3.5 text-slate-400">{formatDate(expense.date)}</td>
+      <td className="px-5 py-3.5 text-zinc-300">{expense.branch?.name}</td>
+      <td className="px-5 py-3.5 text-zinc-400">{formatDate(expense.date)}</td>
       <td className="px-5 py-3.5 text-right">
         <div className="inline-flex gap-2">
           <button
             onClick={() => onEdit(expense)}
-            className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+            className="p-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-colors"
           >
             <Edit size={16} />
           </button>

@@ -98,11 +98,11 @@ export const ExpensesLedgerPage: React.FC = () => {
         categories={categories}
       />
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-sm">
         {loading ? (
-          <p className="text-slate-400 p-4">Yuklanmoqda...</p>
+          <p className="text-zinc-400 p-4">Yuklanmoqda...</p>
         ) : expenses.length === 0 ? (
-          <div className="text-center py-12 text-slate-500">
+          <div className="text-center py-12 text-zinc-500">
             <BookOpen size={40} className="mx-auto opacity-30 mb-2" />
             <p>Daftarda hech qanday xarajat mavjud emas</p>
           </div>
@@ -120,49 +120,49 @@ export const ExpensesLedgerPage: React.FC = () => {
             ]}
           >
             {expenses.map((exp) => (
-              <tr key={exp.id} className="hover:bg-slate-800/40 transition-colors">
-                <td className="px-5 py-3.5 font-bold text-slate-100">{exp.name}</td>
-                <td className="px-5 py-3.5 font-extrabold text-rose-400 text-base">
+              <tr key={exp.id} className="hover:bg-zinc-800/40 transition-colors">
+                <td className="px-5 py-3.5 font-bold text-zinc-100">{exp.name}</td>
+                <td className="px-5 py-3.5 font-extrabold text-orange-400 text-base">
                   {formatUZS(exp.value)}
                 </td>
                 <td className="px-5 py-3.5">
                   <Badge status={exp.category?.name || 'Xarajat'} />
                 </td>
-                <td className="px-5 py-3.5 text-slate-300">{exp.branch?.name}</td>
-                <td className="px-5 py-3.5 text-indigo-300 font-semibold text-xs">
+                <td className="px-5 py-3.5 text-zinc-300">{exp.branch?.name}</td>
+                <td className="px-5 py-3.5 text-amber-300 font-semibold text-xs">
                   {exp.createdBy ? (
                     <div>
                       <span>
                         {exp.createdBy.firstName} {exp.createdBy.lastName}
                       </span>
-                      <span className="block text-[11px] text-slate-400 font-normal">
+                      <span className="block text-[11px] text-zinc-400 font-normal">
                         {exp.createdBy.role?.displayName || 'Clerk'}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-slate-500 italic">Kiritilmagan</span>
+                    <span className="text-zinc-500 italic">Kiritilmagan</span>
                   )}
                 </td>
-                <td className="px-5 py-3.5 text-slate-400">{formatDate(exp.date)}</td>
+                <td className="px-5 py-3.5 text-zinc-400">{formatDate(exp.date)}</td>
                 <td className="px-5 py-3.5">
                   {exp.receiptUrl ? (
                     <a
                       href={exp.receiptUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-indigo-400 hover:underline text-xs"
+                      className="inline-flex items-center gap-1 text-orange-400 hover:underline text-xs"
                     >
                       <ExternalLink size={14} /> Chekni ko‘rish
                     </a>
                   ) : (
-                    <span className="text-slate-600 text-xs">-</span>
+                    <span className="text-zinc-600 text-xs">-</span>
                   )}
                 </td>
                 <td className="px-5 py-3.5 text-right">
                   <div className="inline-flex gap-2">
                     <button
                       onClick={() => openEditModal(exp)}
-                      className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20"
+                      className="p-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20"
                     >
                       <Edit size={16} />
                     </button>

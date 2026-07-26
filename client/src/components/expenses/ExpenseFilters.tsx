@@ -24,12 +24,12 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
   categories,
 }) => {
   return (
-    <div className="bg-slate-800/80 border border-slate-700/50 rounded-xl p-4 flex flex-wrap gap-4 items-center">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-wrap gap-4 items-center">
       <div className="relative flex-1 min-w-[240px]">
-        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
         <input
           type="text"
-          className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+          className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-orange-500"
           placeholder="Xarajat nomi bo‘yicha qidiruv..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -37,7 +37,7 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
       </div>
 
       <select
-        className="bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+        className="bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2 text-sm text-zinc-200 focus:outline-none focus:border-orange-500"
         value={selectedBranch}
         onChange={(e) => setSelectedBranch(e.target.value)}
       >
@@ -50,7 +50,7 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
       </select>
 
       <select
-        className="bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+        className="bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2 text-sm text-zinc-200 focus:outline-none focus:border-orange-500"
         value={selectedCategory}
         onChange={(e) => setSelectedCategory(e.target.value)}
       >
