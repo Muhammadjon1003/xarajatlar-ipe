@@ -7,32 +7,41 @@ interface CategoryChartCardProps {
   data: { id: string; name: string; total: number }[];
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f43f5e'];
+// 2nd and 3rd Color Palette: Orange, Yellow/Gold, and close warm shades
+const WARM_COLORS = [
+  '#f97316', // Orange
+  '#facc15', // Yellow
+  '#ea580c', // Dark Orange
+  '#eab308', // Gold
+  '#fb923c', // Light Orange
+  '#d97706', // Amber
+  '#fde047', // Light Yellow
+];
 
 export const CategoryChartCard: React.FC<CategoryChartCardProps> = ({ data }) => {
   return (
-    <div className="bg-slate-800/80 border border-slate-700/50 rounded-xl p-5 shadow-lg">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
-        <PieIcon size={20} className="text-indigo-400" />
+        <PieIcon size={20} className="text-orange-400" />
         <h3 className="text-base font-bold text-white">Xarajat Kategoriyalari</h3>
       </div>
       {data.length === 0 ? (
-        <div className="text-slate-500 text-center py-12 text-sm">
+        <div className="text-zinc-500 text-center py-12 text-sm">
           Ushbu oyda hali xarajatlar mavjud emas
         </div>
       ) : (
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} layout="vertical" margin={{ left: 10, right: 10 }}>
-              <XAxis type="number" tickFormatter={(val) => `${Math.round(val / 1000)}k`} stroke="#64748b" />
-              <YAxis type="category" dataKey="name" stroke="#94a3b8" width={110} />
+              <XAxis type="number" tickFormatter={(val) => `${Math.round(val / 1000)}k`} stroke="#71717a" />
+              <YAxis type="category" dataKey="name" stroke="#a1a1aa" width={110} />
               <Tooltip
                 formatter={(val: any) => [formatUZS(val), 'Summa']}
-                contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
+                contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px', color: '#fff' }}
               />
               <Bar dataKey="total" radius={[0, 6, 6, 0]}>
                 {data.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={WARM_COLORS[index % WARM_COLORS.length]} />
                 ))}
               </Bar>
             </BarChart>

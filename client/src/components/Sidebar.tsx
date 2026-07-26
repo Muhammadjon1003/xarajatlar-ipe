@@ -34,17 +34,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   ];
 
   return (
-    <aside className="w-64 h-screen fixed left-0 top-0 bg-slate-900 border-r border-slate-800 flex flex-col p-5 z-40">
+    <aside className="w-64 h-screen fixed left-0 top-0 bg-zinc-950 border-r border-zinc-800/80 flex flex-col p-5 z-40">
       {/* Brand Logo */}
-      <div className="flex items-center gap-3 pb-5 mb-5 border-b border-slate-800">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-          <TrendingDown size={22} className="text-white" />
+      <div className="flex items-center gap-3 pb-5 mb-5 border-b border-zinc-800/80">
+        <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-zinc-950 font-bold shadow-sm">
+          <TrendingDown size={22} className="text-zinc-950" />
         </div>
         <div>
           <h2 className="text-base font-extrabold text-white tracking-tight">
             Xarajatlar & Oylik
           </h2>
-          <span className="text-xs text-slate-400 font-semibold">Moliya Boshqaruvi</span>
+          <span className="text-xs text-orange-400 font-semibold">Moliya Boshqaruvi</span>
         </div>
       </div>
 
@@ -57,13 +57,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 isActive
-                  ? 'bg-indigo-600/15 text-white border-l-4 border-indigo-500 font-bold'
-                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-l-4 border-transparent'
+                  ? 'bg-orange-500/15 text-orange-400 border-l-4 border-orange-500 font-bold'
+                  : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 border-l-4 border-transparent'
               }`}
             >
-              <Icon size={18} className={isActive ? 'text-indigo-400' : 'text-slate-400'} />
+              <Icon size={18} className={isActive ? 'text-orange-400' : 'text-zinc-400'} />
               <span className="truncate">{item.label}</span>
             </button>
           );
@@ -71,12 +71,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       </nav>
 
       {/* Active User Info Banner */}
-      <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+      <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-between">
         <div className="overflow-hidden">
           <p className="text-xs font-bold text-white truncate">
             {user?.firstName} {user?.lastName}
           </p>
-          <span className="text-[11px] text-emerald-400 font-semibold block">
+          <span className="text-[11px] text-amber-400 font-semibold block">
             {user?.roleDisplayName || 'Test Mode Active'}
           </span>
         </div>

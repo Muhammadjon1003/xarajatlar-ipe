@@ -13,17 +13,17 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyle =
-    'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variants = {
     primary:
-      'bg-indigo-600 text-white hover:bg-indigo-500 active:bg-indigo-700 shadow-sm',
+      'bg-orange-500 text-zinc-950 hover:bg-orange-400 active:bg-orange-600 font-bold shadow-sm',
     secondary:
-      'bg-zinc-800 text-zinc-200 border border-zinc-700/70 hover:bg-zinc-700/60 hover:text-white',
+      'bg-zinc-900 text-zinc-200 border border-zinc-800 hover:bg-zinc-800 hover:text-white',
     danger:
       'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:text-rose-300',
     success:
-      'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-300',
+      'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-300',
   };
 
   return (

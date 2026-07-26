@@ -7,12 +7,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
+        dark: {
+          bg: '#121212',
+          surface: '#1c1c1f',
+          card: '#242428',
+          border: '#333338',
+        },
+        accent: {
+          orange: '#f97316',
+          orangeDark: '#ea580c',
+          yellow: '#facc15',
+          gold: '#eab308',
+          amber: '#d97706',
         },
       },
       fontFamily: {
