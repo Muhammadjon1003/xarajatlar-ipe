@@ -72,10 +72,10 @@ export const BranchesCategoriesPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Branches */}
-        <div className="bg-slate-800/80 border border-slate-700/50 rounded-xl p-5 shadow-lg space-y-4">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Building2 size={20} className="text-indigo-400" />
+              <Building2 size={20} className="text-orange-400" />
               <h3 className="text-lg font-bold text-white">Filiallar</h3>
             </div>
             <Button variant="primary" icon={<Plus size={16} />} onClick={() => setBranchModal(true)}>
@@ -87,10 +87,10 @@ export const BranchesCategoriesPage: React.FC = () => {
         </div>
 
         {/* Categories */}
-        <div className="bg-slate-800/80 border border-slate-700/50 rounded-xl p-5 shadow-lg space-y-4">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Tag size={20} className="text-emerald-400" />
+              <Tag size={20} className="text-yellow-400" />
               <h3 className="text-lg font-bold text-white">Xarajat Kategoriyalari</h3>
             </div>
             <Button variant="primary" icon={<Plus size={16} />} onClick={() => setCategoryModal(true)}>
