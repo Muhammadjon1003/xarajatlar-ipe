@@ -35,6 +35,10 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Xarajatlar & Oyliklar Backend Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Xarajatlar & Oyliklar Backend Server running on port ${PORT}`);
+  });
+}
+
+export default app;
