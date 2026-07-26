@@ -3,9 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { Branch, ExpenseCategory, Expense } from '../../types';
 import { ModalWrapper } from '../common/ModalWrapper';
 import { Input } from '../common/Input';
+import { CurrencyInput } from '../common/CurrencyInput';
+import { CustomDatePicker } from '../common/CustomDatePicker';
 import { Button } from '../common/Button';
 import { FileInput } from '../common/FileInput';
-import { formatUZS } from '../../utils/format';
 
 interface ExpenseModalFormProps {
   isOpen: boolean;
@@ -88,21 +89,18 @@ export const ExpenseModalForm: React.FC<ExpenseModalFormProps> = ({
         />
 
         <div className="grid grid-cols-2 gap-4">
-          <Input
+          <CurrencyInput
             label="Summa (UZS) *"
-            type="number"
-            placeholder="1500000"
             value={value}
-            onChange={(e) => setValue(e.target.value)}
-            helper={value ? formatUZS(value) : undefined}
+            onChange={(val) => setValue(val)}
+            placeholder="1 500 000"
             required
           />
 
-          <Input
+          <CustomDatePicker
             label="Sana *"
-            type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(d) => setDate(d)}
             required
           />
         </div>
@@ -113,7 +111,7 @@ export const ExpenseModalForm: React.FC<ExpenseModalFormProps> = ({
               Filial *
             </label>
             <select
-              className="w-full bg-zinc-950/60 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
               required
@@ -131,7 +129,7 @@ export const ExpenseModalForm: React.FC<ExpenseModalFormProps> = ({
               Kategoriya *
             </label>
             <select
-              className="w-full bg-zinc-950/60 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
               required

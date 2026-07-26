@@ -4,11 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { Branch, ExpenseCategory, Expense } from '../types';
 import { PageHeader } from '../components/common/PageHeader';
 import { Input } from '../components/common/Input';
+import { CurrencyInput } from '../components/common/CurrencyInput';
+import { CustomDatePicker } from '../components/common/CustomDatePicker';
 import { Button } from '../components/common/Button';
 import { FileInput } from '../components/common/FileInput';
 import { TableWrapper } from '../components/common/TableWrapper';
+import { ReceiptImageModal } from '../components/common/ReceiptImageModal';
 import { formatUZS, formatDate } from '../utils/format';
-import { PlusCircle, CheckCircle, Receipt, ExternalLink } from 'lucide-react';
+import { PlusCircle, CheckCircle, Receipt, Eye } from 'lucide-react';
 
 export const ExpensesInputPage: React.FC = () => {
   const { user } = useAuth();
@@ -25,6 +28,9 @@ export const ExpensesInputPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Receipt Modal State
+  const [selectedReceiptUrl, setSelectedReceiptUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMetadata();
@@ -60,7 +66,7 @@ export const ExpensesInputPage: React.FC = () => {
         date,
         branchId,
         categoryId,
-        createdById: user?.id || undefined, // Automatically attach currently logged in clerk
+        createdById: user?.id || undefined,
         receiptUrl: receiptUrl || null,
       });
 
@@ -90,7 +96,7 @@ export const ExpensesInputPage: React.FC = () => {
         </div>
       )}
 
-      {/* Input Form Card - Clean Non-Glowing UI */}
+      {/* Input Form Card */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-md space-y-5">
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -102,21 +108,20 @@ export const ExpensesInputPage: React.FC = () => {
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
+            {/* Live 3-digit space formatted currency input */}
+            <CurrencyInput
               label="Summa (UZS) *"
-              type="number"
-              placeholder="1200000"
               value={value}
-              onChange={(e) => setValue(e.target.value)}
-              helper={value ? formatUZS(value) : undefined}
+              onChange={(val) => setValue(val)}
+              placeholder="1 500 000"
               required
             />
 
-            <Input
+            {/* Interactive Calendar Date Picker Modal */}
+            <CustomDatePicker
               label="Sana *"
-              type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(d) => setDate(d)}
               required
             />
           </div>
@@ -127,7 +132,7 @@ export const ExpensesInputPage: React.FC = () => {
                 Filial *
               </label>
               <select
-                className="w-full bg-zinc-950/60 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
                 value={branchId}
                 onChange={(e) => setBranchId(e.target.value)}
                 required
@@ -145,7 +150,7 @@ export const ExpensesInputPage: React.FC = () => {
                 Kategoriya *
               </label>
               <select
-                className="w-full bg-zinc-950/60 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 required
@@ -180,7 +185,7 @@ export const ExpensesInputPage: React.FC = () => {
       {/* Recent Entries */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-md space-y-4">
         <div className="flex items-center gap-2">
-          <Receipt size={20} className="text-indigo-400" />
+          <Receipt size={20} className="text-orange-400" />
           <h3 className="text-base font-bold text-white">So‘nggi Kiritilgan Xarajatlar</h3>
         </div>
 
@@ -191,24 +196,23 @@ export const ExpensesInputPage: React.FC = () => {
             {recentEntries.map((exp) => (
               <tr key={exp.id} className="hover:bg-zinc-800/40">
                 <td className="px-5 py-3 font-semibold text-zinc-100">{exp.name}</td>
-                <td className="px-5 py-3 font-bold text-rose-400">{formatUZS(exp.value)}</td>
+                <td className="px-5 py-3 font-bold text-orange-400">{formatUZS(exp.value)}</td>
                 <td className="px-5 py-3 text-zinc-300">{exp.branch?.name}</td>
                 <td className="px-5 py-3 text-zinc-300">{exp.category?.name}</td>
-                <td className="px-5 py-3 text-indigo-300 font-medium">
+                <td className="px-5 py-3 text-amber-300 font-medium text-xs">
                   {exp.createdBy
                     ? `${exp.createdBy.firstName} ${exp.createdBy.lastName}`
                     : user?.firstName ? `${user.firstName} ${user.lastName}` : 'Tizim'}
                 </td>
                 <td className="px-5 py-3">
                   {exp.receiptUrl ? (
-                    <a
-                      href={exp.receiptUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-indigo-400 hover:underline text-xs"
+                    <button
+                      type="button"
+                      onClick={() => setSelectedReceiptUrl(exp.receiptUrl || null)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 text-xs font-semibold transition-colors"
                     >
-                      <ExternalLink size={13} /> Chek
-                    </a>
+                      <Eye size={13} /> Chekni ko‘rish
+                    </button>
                   ) : (
                     <span className="text-zinc-600 text-xs">-</span>
                   )}
@@ -219,6 +223,13 @@ export const ExpensesInputPage: React.FC = () => {
           </TableWrapper>
         )}
       </div>
+
+      {/* Receipt Image Modal Viewer */}
+      <ReceiptImageModal
+        isOpen={!!selectedReceiptUrl}
+        receiptUrl={selectedReceiptUrl}
+        onClose={() => setSelectedReceiptUrl(null)}
+      />
     </div>
   );
 };

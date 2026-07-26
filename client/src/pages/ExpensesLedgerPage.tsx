@@ -6,8 +6,9 @@ import { ExpenseFilters } from '../components/expenses/ExpenseFilters';
 import { TableWrapper } from '../components/common/TableWrapper';
 import { Badge } from '../components/common/Badge';
 import { ExpenseModalForm } from '../components/expenses/ExpenseModalForm';
+import { ReceiptImageModal } from '../components/common/ReceiptImageModal';
 import { formatUZS, formatDate } from '../utils/format';
-import { Edit, Trash2, ExternalLink, BookOpen } from 'lucide-react';
+import { Edit, Trash2, Eye, BookOpen } from 'lucide-react';
 
 export const ExpensesLedgerPage: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -21,6 +22,9 @@ export const ExpensesLedgerPage: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  // Receipt Modal State
+  const [selectedReceiptUrl, setSelectedReceiptUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMetadata();
@@ -146,14 +150,13 @@ export const ExpensesLedgerPage: React.FC = () => {
                 <td className="px-5 py-3.5 text-zinc-400">{formatDate(exp.date)}</td>
                 <td className="px-5 py-3.5">
                   {exp.receiptUrl ? (
-                    <a
-                      href={exp.receiptUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-orange-400 hover:underline text-xs"
+                    <button
+                      type="button"
+                      onClick={() => setSelectedReceiptUrl(exp.receiptUrl || null)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 text-xs font-semibold transition-colors"
                     >
-                      <ExternalLink size={14} /> Chekni ko‘rish
-                    </a>
+                      <Eye size={14} /> Chekni ko‘rish
+                    </button>
                   ) : (
                     <span className="text-zinc-600 text-xs">-</span>
                   )}
@@ -187,6 +190,12 @@ export const ExpensesLedgerPage: React.FC = () => {
         categories={categories}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateOrUpdate}
+      />
+
+      <ReceiptImageModal
+        isOpen={!!selectedReceiptUrl}
+        receiptUrl={selectedReceiptUrl}
+        onClose={() => setSelectedReceiptUrl(null)}
       />
     </div>
   );
