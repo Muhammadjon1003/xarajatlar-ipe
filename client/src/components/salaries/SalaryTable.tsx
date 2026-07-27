@@ -10,6 +10,7 @@ interface SalaryTableProps {
   loading: boolean;
   onCalculate: () => void;
   onTogglePaid: (id: string, isPaid: boolean) => void;
+  onUpdateBaseSalary: (id: string, newBaseSalary: number) => Promise<void>;
 }
 
 export const SalaryTable: React.FC<SalaryTableProps> = ({
@@ -17,14 +18,15 @@ export const SalaryTable: React.FC<SalaryTableProps> = ({
   loading,
   onCalculate,
   onTogglePaid,
+  onUpdateBaseSalary,
 }) => {
   if (loading) {
-    return <p className="text-slate-400 p-4">Yuklanmoqda...</p>;
+    return <p className="text-zinc-400 p-4">Yuklanmoqda...</p>;
   }
 
   if (salaries.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-zinc-500">
         <Banknote size={40} className="mx-auto opacity-30 mb-2" />
         <p>Ushbu oy uchun hali oyliklar hisoblanmagan.</p>
         <Button variant="secondary" className="mt-4" onClick={onCalculate}>
@@ -39,7 +41,7 @@ export const SalaryTable: React.FC<SalaryTableProps> = ({
       headers={[
         'Xodim',
         'Lavozim / Rol',
-        'Asosiy Maosh',
+        'Asosiy Maosh (Tahrirlash)',
         'Smena Qo‘shimcha',
         'Smena Ushlanma',
         'Avans Ushlanma',
@@ -49,7 +51,12 @@ export const SalaryTable: React.FC<SalaryTableProps> = ({
       ]}
     >
       {salaries.map((sal) => (
-        <SalaryTableRow key={sal.id} salary={sal} onTogglePaid={onTogglePaid} />
+        <SalaryTableRow
+          key={sal.id}
+          salary={sal}
+          onTogglePaid={onTogglePaid}
+          onUpdateBaseSalary={onUpdateBaseSalary}
+        />
       ))}
     </TableWrapper>
   );

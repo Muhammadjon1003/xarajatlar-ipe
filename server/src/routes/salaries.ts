@@ -54,11 +54,9 @@ router.post(
       const targetMonth = Number(month);
       const targetYear = Number(year);
 
-      // Get start and end of month
       const startDate = new Date(targetYear, targetMonth - 1, 1);
       const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
 
-      // Get all active employees
       const employees = await prisma.employee.findMany({
         where: { isActive: true },
       });
@@ -66,9 +64,9 @@ router.post(
       const results = [];
 
       for (const emp of employees) {
-        const baseSalary = Number(emp.defaultBaseSalary || 0);
+        // Base salary uses emp.defaultBaseSalary (last updated salary or 0 if null)
+        const baseSalary = emp.defaultBaseSalary ? Number(emp.defaultBaseSalary) : 0;
 
-        // Sum additions from covering shifts in this month
         const coveringShifts = await prisma.oneTimeShift.aggregate({
           where: {
             coveringEmployeeId: emp.id,
@@ -79,7 +77,6 @@ router.post(
         });
         const totalAdditions = Number(coveringShifts._sum.amount || 0);
 
-        // Sum deductions from absent shifts in this month
         const absentShifts = await prisma.oneTimeShift.aggregate({
           where: {
             absentEmployeeId: emp.id,
@@ -90,7 +87,6 @@ router.post(
         });
         const totalShiftDeductions = Number(absentShifts._sum.amount || 0);
 
-        // Sum advance deductions in this month
         const advances = await prisma.salaryAdvance.aggregate({
           where: {
             employeeId: emp.id,
@@ -101,13 +97,11 @@ router.post(
         });
         const totalAdvanceDeductions = Number(advances._sum.amount || 0);
 
-        // Calculate final payout
         const finalPayout = Math.max(
           0,
           baseSalary + totalAdditions - totalShiftDeductions - totalAdvanceDeductions
         );
 
-        // Upsert MonthlySalary record
         const salary = await prisma.monthlySalary.upsert({
           where: {
             employeeId_month_year: {
@@ -154,6 +148,65 @@ router.post(
     } catch (error) {
       console.error('Calculate payroll error:', error);
       return res.status(500).json({ error: 'Oyliklarni hisoblashda xatolik' });
+    }
+  }
+);
+
+// PUT /api/salaries/:id (Update base salary for a specific month - AUTOMATICALLY UPDATES LAST SALARY on Employee)
+router.put(
+  '/:id',
+  authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { baseSalary } = req.body;
+
+      if (baseSalary === undefined || isNaN(Number(baseSalary))) {
+        return res.status(400).json({ error: 'Oylik maosh summasi kiritilishi shart' });
+      }
+
+      const newBaseSalary = Number(baseSalary);
+
+      const existingSalary = await prisma.monthlySalary.findUnique({
+        where: { id },
+      });
+
+      if (!existingSalary) {
+        return res.status(404).json({ error: 'Oylik qaydi topilmadi' });
+      }
+
+      const finalPayout = Math.max(
+        0,
+        newBaseSalary +
+          Number(existingSalary.totalAdditions) -
+          Number(existingSalary.totalShiftDeductions) -
+          Number(existingSalary.totalAdvanceDeductions)
+      );
+
+      // 1. Update MonthlySalary record
+      const salary = await prisma.monthlySalary.update({
+        where: { id },
+        data: {
+          baseSalary: newBaseSalary,
+          finalPayout,
+        },
+        include: {
+          employee: {
+            select: { id: true, firstName: true, lastName: true },
+          },
+        },
+      });
+
+      // 2. AUTOMATICALLY UPDATE EMPLOYEE'S LAST SALARY (defaultBaseSalary)
+      await prisma.employee.update({
+        where: { id: existingSalary.employeeId },
+        data: { defaultBaseSalary: newBaseSalary },
+      });
+
+      return res.json(salary);
+    } catch (error) {
+      console.error('Update salary error:', error);
+      return res.status(500).json({ error: 'Oylik summasini yangilashda xatolik' });
     }
   }
 );

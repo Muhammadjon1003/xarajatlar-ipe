@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Employee, Role } from '../../types';
 import { ModalWrapper } from '../common/ModalWrapper';
 import { Input } from '../common/Input';
+import { CurrencyInput } from '../common/CurrencyInput';
 import { Button } from '../common/Button';
-import { formatUZS } from '../../utils/format';
 
 interface EmployeeModalFormProps {
   isOpen: boolean;
@@ -45,7 +45,7 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
       setLastName('');
       setPhone('');
       setPassword('');
-      setDefaultBaseSalary('');
+      setDefaultBaseSalary(''); // Default null (empty) when adding new employee
       setIsActive(true);
       if (roles.length > 0) setRoleId(roles[0].id);
     }
@@ -61,7 +61,7 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
         phone: phone || null,
         password: password || undefined,
         roleId,
-        defaultBaseSalary: defaultBaseSalary ? Number(defaultBaseSalary) : null,
+        defaultBaseSalary: defaultBaseSalary ? Number(defaultBaseSalary) : null, // Null if unassigned
         isActive,
       });
       onClose();
@@ -114,11 +114,11 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide">
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wide">
               Rol *
             </label>
             <select
-              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
               value={roleId}
               onChange={(e) => setRoleId(e.target.value)}
               required
@@ -131,14 +131,17 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
             </select>
           </div>
 
-          <Input
-            label="Asosiy Baza Oyligi (UZS)"
-            type="number"
-            placeholder="5000000"
-            value={defaultBaseSalary}
-            onChange={(e) => setDefaultBaseSalary(e.target.value)}
-            helper={defaultBaseSalary ? formatUZS(defaultBaseSalary) : undefined}
-          />
+          <div>
+            <CurrencyInput
+              label="Baza Oyligi (Ixtiyoriy)"
+              value={defaultBaseSalary}
+              onChange={(val) => setDefaultBaseSalary(val)}
+              placeholder="Kiritilmagan (Null)"
+            />
+            <span className="block text-[11px] text-zinc-500 mt-1">
+              (Oylik vedomostda kiritilganda avtomatik yangilanadi)
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 pt-1">
@@ -147,14 +150,14 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
             id="isActive"
             checked={isActive}
             onChange={(e) => setIsActive(e.target.checked)}
-            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500"
+            className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-orange-500 focus:ring-orange-500"
           />
-          <label htmlFor="isActive" className="text-xs font-medium text-slate-300">
-            Xodimlarning faollik holati (Active)
+          <label htmlFor="isActive" className="text-xs font-medium text-zinc-300">
+            Xodim faollik holati (Active)
           </label>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
           <Button variant="secondary" type="button" onClick={onClose}>
             Bekor Qilish
           </Button>

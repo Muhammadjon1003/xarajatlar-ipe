@@ -43,6 +43,11 @@ export const SalariesPage: React.FC = () => {
     }
   };
 
+  const handleUpdateBaseSalary = async (salaryId: string, newBaseSalary: number) => {
+    await api.put(`/salaries/${salaryId}`, { baseSalary: newBaseSalary });
+    fetchSalaries();
+  };
+
   const togglePaidStatus = async (salaryId: string, currentStatus: boolean) => {
     try {
       await api.put(`/salaries/${salaryId}/pay`, { isPaid: !currentStatus });
@@ -58,7 +63,7 @@ export const SalariesPage: React.FC = () => {
     <div className="space-y-6">
       <PageHeader
         title="Oylik Maoshlar Vedomosti"
-        subtitle="Xodimlarning asosiy maoshi, smena almashtirish va avans ushlanmalari bo‘yicha oylik hisobot"
+        subtitle="Xodimlarning maoshini kiritish/yangilash va smena va avans ushlanmalari bo‘yicha oylik hisobot"
       />
 
       <SalaryFilters
@@ -76,6 +81,7 @@ export const SalariesPage: React.FC = () => {
         loading={loading}
         onCalculate={handleCalculatePayroll}
         onTogglePaid={togglePaidStatus}
+        onUpdateBaseSalary={handleUpdateBaseSalary}
       />
     </div>
   );
