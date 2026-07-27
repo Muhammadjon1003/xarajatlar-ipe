@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, Clock, Edit, Save, X } from 'lucide-react';
+import { CheckCircle, Clock, Save } from 'lucide-react';
 import { MonthlySalary } from '../../types';
 import { formatUZS } from '../../utils/format';
 import { Badge } from '../common/Badge';
@@ -15,17 +15,20 @@ export const SalaryTableRow: React.FC<SalaryTableRowProps> = ({
   onTogglePaid,
   onUpdateBaseSalary,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(salary.baseSalary.toString());
+  const [inputValue, setInputValue] = useState(
+    Number(salary.baseSalary) > 0 ? salary.baseSalary.toString() : ''
+  );
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const handleSave = async () => {
-    const num = Number(editValue.replace(/\D/g, ''));
-    if (isNaN(num)) return;
+    const num = Number(inputValue.replace(/\s/g, '').replace(/[^\d]/g, ''));
+    if (isNaN(num) || num <= 0) return;
     setSaving(true);
     try {
       await onUpdateBaseSalary(salary.id, num);
-      setIsEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Xatolik');
     } finally {
@@ -33,97 +36,78 @@ export const SalaryTableRow: React.FC<SalaryTableRowProps> = ({
     }
   };
 
+  // Format input with spaces as user types
+  const handleInputChange = (val: string) => {
+    const raw = val.replace(/\D/g, '');
+    // Add spaces every 3 digits from right
+    const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    setInputValue(formatted);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSave();
+  };
+
   return (
-    <tr className="hover:bg-zinc-800/40 transition-colors">
-      <td className="px-5 py-3.5 font-bold text-zinc-100">
+    <tr className="hover:bg-zinc-800/30 transition-colors border-b border-zinc-800/50">
+      <td className="px-5 py-4 font-bold text-zinc-100">
         {salary.employee?.firstName} {salary.employee?.lastName}
       </td>
-      <td className="px-5 py-3.5">
+      <td className="px-5 py-4">
         <Badge status={salary.employee?.role?.displayName || 'Xodim'} />
       </td>
 
-      {/* Editable Base Salary Field */}
-      <td className="px-5 py-3.5 font-semibold text-zinc-300">
-        {isEditing ? (
-          <div className="flex items-center gap-1.5">
+      {/* Additions & Deductions (read-only) */}
+      <td className="px-5 py-4 font-semibold text-emerald-400 text-sm">
+        {Number(salary.totalAdditions) > 0 ? `+${formatUZS(salary.totalAdditions)}` : '—'}
+      </td>
+      <td className="px-5 py-4 font-semibold text-rose-400 text-sm">
+        {Number(salary.totalShiftDeductions) > 0 ? `-${formatUZS(salary.totalShiftDeductions)}` : '—'}
+      </td>
+      <td className="px-5 py-4 font-semibold text-amber-400 text-sm">
+        {Number(salary.totalAdvanceDeductions) > 0 ? `-${formatUZS(salary.totalAdvanceDeductions)}` : '—'}
+      </td>
+      <td className="px-5 py-4 font-extrabold text-white text-base">
+        {Number(salary.finalPayout) > 0 ? formatUZS(salary.finalPayout) : '—'}
+      </td>
+
+      {/* AMAL COLUMN: Prominent Salary Input */}
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="relative">
             <input
               type="text"
               inputMode="numeric"
-              className="w-32 bg-[#0d0d0f] border border-orange-500 rounded-lg px-2.5 py-1 text-xs font-bold text-orange-400 focus:outline-none"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
+              className={`w-36 bg-[#0d0d0f] border rounded-xl px-3 py-2 text-sm font-bold focus:outline-none transition-all ${
+                saved
+                  ? 'border-emerald-500 text-emerald-400'
+                  : 'border-zinc-700 text-orange-400 focus:border-orange-500'
+              }`}
+              value={inputValue}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Oylik kiriting"
             />
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="p-1 rounded bg-orange-500 text-zinc-950 hover:bg-orange-400"
-              title="Saqlash va keyingi oylar uchun avto-yangilash"
-            >
-              <Save size={14} />
-            </button>
-            <button
-              onClick={() => setIsEditing(false)}
-              className="p-1 rounded bg-zinc-800 text-zinc-400 hover:text-white"
-            >
-              <X size={14} />
-            </button>
           </div>
-        ) : (
-          <div className="flex items-center gap-2 group">
-            <span>
-              {Number(salary.baseSalary) > 0
-                ? formatUZS(salary.baseSalary)
-                : 'Kiritilmagan (0)'}
-            </span>
-            <button
-              onClick={() => {
-                setEditValue(salary.baseSalary ? salary.baseSalary.toString() : '');
-                setIsEditing(true);
-              }}
-              className="opacity-0 group-hover:opacity-100 p-1 text-orange-400 hover:bg-orange-500/10 rounded transition-all"
-              title="Oylik kiritish / yangilash"
-            >
-              <Edit size={13} />
-            </button>
-          </div>
-        )}
-      </td>
-
-      <td className="px-5 py-3.5 font-semibold text-emerald-400">
-        +{formatUZS(salary.totalAdditions)}
-      </td>
-      <td className="px-5 py-3.5 font-semibold text-rose-400">
-        -{formatUZS(salary.totalShiftDeductions)}
-      </td>
-      <td className="px-5 py-3.5 font-semibold text-amber-400">
-        -{formatUZS(salary.totalAdvanceDeductions)}
-      </td>
-      <td className="px-5 py-3.5 font-extrabold text-white text-base">
-        {formatUZS(salary.finalPayout)}
-      </td>
-      <td className="px-5 py-3.5">
-        <Badge status={salary.isPaid ? 'PAID' : 'PENDING'} />
-      </td>
-      <td className="px-5 py-3.5 text-right">
-        <button
-          onClick={() => onTogglePaid(salary.id, salary.isPaid)}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            salary.isPaid
-              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20'
-              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-          }`}
-        >
-          {salary.isPaid ? (
-            <>
-              <Clock size={14} /> Qaytarish
-            </>
-          ) : (
-            <>
-              <CheckCircle size={14} /> To‘lash
-            </>
-          )}
-        </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !inputValue}
+            title="Saqlash (Enter ham bosish mumkin)"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+              saved
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                : 'bg-orange-500 text-zinc-950 border-orange-500 hover:bg-orange-400 disabled:opacity-40 disabled:cursor-not-allowed'
+            }`}
+          >
+            {saving ? (
+              <span className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
+            ) : saved ? (
+              <><CheckCircle size={14} /> Saqlandi</>
+            ) : (
+              <><Save size={14} /> Kiritish</>
+            )}
+          </button>
+        </div>
       </td>
     </tr>
   );

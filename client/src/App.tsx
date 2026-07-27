@@ -7,6 +7,7 @@ import { ExpensesInputPage } from './pages/ExpensesInputPage';
 import { ExpensesStatsPage } from './pages/ExpensesStatsPage';
 import { ExpensesLedgerPage } from './pages/ExpensesLedgerPage';
 import { SalariesPage } from './pages/SalariesPage';
+import { SalaryPayoutPage } from './pages/SalaryPayoutPage';
 import { EmployeesPage } from './pages/EmployeesPage';
 import { AdvancesPage } from './pages/AdvancesPage';
 import { ShiftsPage } from './pages/ShiftsPage';
@@ -40,6 +41,8 @@ export const App: React.FC = () => {
         return <ExpensesLedgerPage />;
       case 'salaries':
         return <SalariesPage />;
+      case 'salary-payout':
+        return <SalaryPayoutPage />;
       case 'employees':
         return <EmployeesPage />;
       case 'advances':

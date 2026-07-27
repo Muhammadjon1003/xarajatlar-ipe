@@ -10,6 +10,7 @@ import {
   ArrowRightLeft,
   Building2,
   TrendingDown,
+  DollarSign,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,6 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'expenses-stats', label: 'Xarajat Tahlili & Stats', icon: BarChart3 },
     { id: 'expenses-ledger', label: 'Xarajat Daftari (Ledger)', icon: BookOpen },
     { id: 'salaries', label: 'Oyliklarni Hisoblash', icon: Banknote },
+    { id: 'salary-payout', label: 'Oyliklarni Berish', icon: DollarSign },
     { id: 'employees', label: 'Xodimlar Shtati', icon: Users },
     { id: 'advances', label: 'Oylik Avanslar', icon: Clock },
     { id: 'shifts', label: 'Zamena', icon: ArrowRightLeft },

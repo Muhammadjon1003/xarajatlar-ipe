@@ -41,13 +41,11 @@ export const SalaryTable: React.FC<SalaryTableProps> = ({
       headers={[
         'Xodim',
         'Lavozim / Rol',
-        'Asosiy Maosh (Tahrirlash)',
         'Zamena Qilgan',
         'Zamena Qildirgan',
         'Avans Ushlanma',
-        'Qo‘lga Tegadigan (Net)',
-        'Holat',
-        'Amal',
+        "Qo'lga Tegadigan (Net)",
+        'Oylik Kiritish (Amal)',
       ]}
     >
       {salaries.map((sal) => (
