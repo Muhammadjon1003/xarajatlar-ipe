@@ -2,8 +2,22 @@ import React, { useEffect, useState } from 'react';
 import api from '../api/client';
 import { Expense, Branch } from '../types';
 import { PageHeader } from '../components/common/PageHeader';
-import { formatUZS, getMonthName } from '../utils/format';
-import { PieChart as PieIcon, BarChart3, LineChart as LineIcon, Calendar, Building2, SlidersHorizontal } from 'lucide-react';
+import { ReceiptImageModal } from '../components/common/ReceiptImageModal';
+import { formatUZS, getMonthName, formatDate } from '../utils/format';
+import {
+  PieChart as PieIcon,
+  BarChart3,
+  LineChart as LineIcon,
+  Calendar,
+  Building2,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Award,
+  Flame,
+  Eye,
+  CalendarDays,
+} from 'lucide-react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -43,7 +57,11 @@ export const ExpensesStatsPage: React.FC = () => {
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [prevPeriodExpenses, setPrevPeriodExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Receipt Image Modal State
+  const [selectedReceiptUrl, setSelectedReceiptUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBranches();
@@ -66,33 +84,58 @@ export const ExpensesStatsPage: React.FC = () => {
     setLoading(true);
     try {
       const params: any = {};
+      const prevParams: any = {};
 
       if (filterMode === 'quick') {
         const now = new Date();
         const startDate = new Date();
-        if (quickRange === '7days') {
-          startDate.setDate(now.getDate() - 7);
-        } else if (quickRange === '30days') {
-          startDate.setDate(now.getDate() - 30);
-        } else if (quickRange === '365days') {
-          startDate.setDate(now.getDate() - 365);
-        }
+        let days = 30;
+
+        if (quickRange === '7days') days = 7;
+        if (quickRange === '30days') days = 30;
+        if (quickRange === '365days') days = 365;
+
+        startDate.setDate(now.getDate() - days);
         params.startDate = startDate.toISOString();
         params.endDate = now.toISOString();
+
+        // Calculate previous period for MoM variance comparison
+        const prevStartDate = new Date(startDate);
+        prevStartDate.setDate(prevStartDate.getDate() - days);
+        prevParams.startDate = prevStartDate.toISOString();
+        prevParams.endDate = startDate.toISOString();
       } else {
         // Custom Year / Month mode
         params.year = selectedYear;
         if (selectedMonth) {
           params.month = selectedMonth;
+
+          // MoM previous month calculation
+          const m = Number(selectedMonth);
+          if (m === 1) {
+            prevParams.year = selectedYear - 1;
+            prevParams.month = 12;
+          } else {
+            prevParams.year = selectedYear;
+            prevParams.month = m - 1;
+          }
+        } else {
+          prevParams.year = selectedYear - 1;
         }
       }
 
       if (selectedBranchId) {
         params.branchId = selectedBranchId;
+        prevParams.branchId = selectedBranchId;
       }
 
-      const res = await api.get('/expenses', { params });
+      const [res, prevRes] = await Promise.all([
+        api.get('/expenses', { params }),
+        api.get('/expenses', { params: prevParams }),
+      ]);
+
       setExpenses(res.data);
+      setPrevPeriodExpenses(prevRes.data);
     } catch (err) {
       console.error('Error fetching expense stats:', err);
     } finally {
@@ -100,22 +143,67 @@ export const ExpensesStatsPage: React.FC = () => {
     }
   };
 
-  // Total Aggregation
+  // --- KPI CALCULATIONS ---
+  // 1. Total Expenses
   const totalExpenseAmount = expenses.reduce((sum, e) => sum + Number(e.value), 0);
+  const prevTotalExpenseAmount = prevPeriodExpenses.reduce((sum, e) => sum + Number(e.value), 0);
 
-  // Selected Branch Name
-  const activeBranchName = selectedBranchId
-    ? branches.find((b) => b.id === selectedBranchId)?.name || 'Filial'
-    : 'Hammasi (Overall)';
+  // 2. Month-over-Month (MoM) Variance Percentage
+  const momVariance =
+    prevTotalExpenseAmount > 0
+      ? ((totalExpenseAmount - prevTotalExpenseAmount) / prevTotalExpenseAmount) * 100
+      : totalExpenseAmount > 0
+      ? 100
+      : 0;
 
-  // 1. Chronologically Sorted Line Chart Data (Oldest -> Newest / 7 days ago -> Today)
+  // 3. Average Daily Expense
+  const calculateDaysInPeriod = () => {
+    if (filterMode === 'quick') {
+      if (quickRange === '7days') return 7;
+      if (quickRange === '30days') return 30;
+      if (quickRange === '365days') return 365;
+    }
+    if (selectedMonth) {
+      const year = selectedYear;
+      const month = Number(selectedMonth);
+      return new Date(year, month, 0).getDate();
+    }
+    return 365;
+  };
+
+  const daysInPeriod = calculateDaysInPeriod();
+  const avgDailyExpense = daysInPeriod > 0 ? totalExpenseAmount / daysInPeriod : 0;
+
+  // 4. Largest Single Expense Item
+  const largestExpense: Expense | null =
+    expenses.length > 0
+      ? expenses.reduce((max, e) => (Number(e.value) > Number(max.value) ? e : max), expenses[0])
+      : null;
+
+  // --- TOP 5 SPENDING CATEGORIES ---
+  const categoryMap: { [name: string]: number } = {};
+  expenses.forEach((e) => {
+    const cName = e.category?.name || 'Boshqa';
+    categoryMap[cName] = (categoryMap[cName] || 0) + Number(e.value);
+  });
+
+  const sortedCategories = Object.keys(categoryMap)
+    .map((name) => {
+      const amount = categoryMap[name];
+      const percentage = totalExpenseAmount > 0 ? (amount / totalExpenseAmount) * 100 : 0;
+      return { name, amount, percentage };
+    })
+    .sort((a, b) => b.amount - a.amount);
+
+  const top5Categories = sortedCategories.slice(0, 5);
+
+  // --- LINE CHART DATA ---
   const buildChronologicalLineData = () => {
     if (filterMode === 'quick' && (quickRange === '7days' || quickRange === '30days')) {
       const daysCount = quickRange === '7days' ? 7 : 30;
       const result: { dateKey: string; dateDisplay: string; total: number; timestamp: number }[] = [];
       const now = new Date();
 
-      // Generate all dates from (now - daysCount) up to today
       for (let i = daysCount; i >= 0; i--) {
         const d = new Date();
         d.setDate(now.getDate() - i);
@@ -135,7 +223,6 @@ export const ExpensesStatsPage: React.FC = () => {
         });
       }
 
-      // Fill in expense values
       expenses.forEach((e) => {
         const eDate = new Date(e.date);
         const yStr = eDate.getFullYear();
@@ -152,7 +239,6 @@ export const ExpensesStatsPage: React.FC = () => {
       return result.map(({ dateDisplay, total }) => ({ date: dateDisplay, total }));
     }
 
-    // For 365 days or custom Year/Month mode: group by month or day and sort ascending by date
     const dateMap: { [key: string]: { display: string; total: number; timestamp: number } } = {};
 
     expenses.forEach((e) => {
@@ -177,7 +263,6 @@ export const ExpensesStatsPage: React.FC = () => {
       dateMap[key].total += Number(e.value);
     });
 
-    // Sort ascending by timestamp
     return Object.values(dateMap)
       .sort((a, b) => a.timestamp - b.timestamp)
       .map(({ display, total }) => ({ date: display, total }));
@@ -185,24 +270,14 @@ export const ExpensesStatsPage: React.FC = () => {
 
   const lineChartData = buildChronologicalLineData();
 
-  // 2. Category Pie Chart Data with percentage calculation
-  const categoryMap: { [name: string]: number } = {};
-  expenses.forEach((e) => {
-    const cName = e.category?.name || 'Boshqa';
-    categoryMap[cName] = (categoryMap[cName] || 0) + Number(e.value);
-  });
+  // --- PIE CHART DATA ---
+  const categoryData = sortedCategories.map(({ name, amount, percentage }) => ({
+    name,
+    value: amount,
+    percentage: `${percentage.toFixed(1)}%`,
+  }));
 
-  const categoryData = Object.keys(categoryMap).map((name) => {
-    const val = categoryMap[name];
-    const pct = totalExpenseAmount > 0 ? ((val / totalExpenseAmount) * 100).toFixed(1) : '0';
-    return {
-      name,
-      value: val,
-      percentage: `${pct}%`,
-    };
-  });
-
-  // 3. Branch Bar Chart Data (Only shown when selectedBranchId === '')
+  // --- BRANCH BAR CHART DATA ---
   const branchMap: { [name: string]: number } = {};
   expenses.forEach((e) => {
     const bName = e.branch?.name || 'Asosiy';
@@ -213,7 +288,11 @@ export const ExpensesStatsPage: React.FC = () => {
     total: branchMap[name],
   }));
 
-  // Custom High-Contrast Tooltip for Pie Chart & Line Chart
+  const activeBranchName = selectedBranchId
+    ? branches.find((b) => b.id === selectedBranchId)?.name || 'Filial'
+    : 'Hammasi (Overall)';
+
+  // High-Contrast Tooltip for Pie Chart
   const CustomPieTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -232,12 +311,12 @@ export const ExpensesStatsPage: React.FC = () => {
     <div className="space-y-6 max-w-7xl mx-auto">
       <PageHeader
         title="Xarajatlar Tahlili & Analitika"
-        subtitle="Vaqt va filiallar bo‘yicha to‘liq statistik diagramma va ko‘rsatkichlar"
+        subtitle="KPI metrikalar, eng katta xarajatlar, kategoriyalar va filiallar bo‘yicha to‘liq statistik ko‘rsatkichlar"
       />
 
       {/* Top Filter Controls Container */}
-      <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-5 shadow-lg space-y-5">
-        {/* Row 1: Filter Mode Toggle (Quick Range vs Custom Year/Month) & Total Banner */}
+      <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-5 shadow-lg space-y-4">
+        {/* Row 1: Filter Mode Toggle */}
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -269,18 +348,12 @@ export const ExpensesStatsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Stat Summary Box */}
-          <div className="bg-[#0d0d0f] border border-zinc-800 rounded-xl px-5 py-2.5 text-right">
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block">
-              {activeBranchName} — Jami Xarajat
-            </span>
-            <h2 className="text-2xl font-extrabold text-orange-400 mt-0.5">
-              {formatUZS(totalExpenseAmount)}
-            </h2>
+          <div className="text-xs font-semibold text-zinc-400">
+            Tanlangan Filial: <span className="text-orange-400 font-bold">{activeBranchName}</span>
           </div>
         </div>
 
-        {/* Row 2: Time Option Controls (Quick Pills vs Year/Month Dropdowns) */}
+        {/* Row 2: Time Controls */}
         {filterMode === 'quick' ? (
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
@@ -357,7 +430,7 @@ export const ExpensesStatsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Row 3: Branch Filter Tab Buttons */}
+        {/* Row 3: Branch Tabs */}
         <div className="space-y-1.5 pt-2 border-t border-zinc-800/80">
           <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
             <Building2 size={14} className="text-amber-400" /> Filiallar:
@@ -402,57 +475,202 @@ export const ExpensesStatsPage: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* Chronological Line Chart: Expenses Dynamic Trend (Oldest -> Today) */}
-          <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-6 shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <LineIcon size={20} className="text-orange-400" />
-                <h3 className="text-lg font-bold text-white">
-                  Xarajatlar Dinamikasi — Vaqt Bo‘yicha ({activeBranchName})
-                </h3>
+          {/* FEATURE 1: KEY PERFORMANCE INDICATOR (KPI) SUMMARY CARDS ROW */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Total Expenses */}
+            <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                  Jami Xarajat
+                </span>
+                <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                  <DollarSign size={20} />
+                </div>
               </div>
-              <span className="text-xs font-semibold text-zinc-400 bg-[#0d0d0f] px-3 py-1 rounded-lg border border-zinc-800">
-                {filterMode === 'quick'
-                  ? quickRange === '7days'
-                    ? 'Oxirgi 7 Kun (Eskidan Bugungacha)'
-                    : quickRange === '30days'
-                    ? 'Oxirgi 30 Kun'
-                    : 'Oxirgi 365 Kun'
-                  : `${selectedYear}-Yil ${selectedMonth ? getMonthName(Number(selectedMonth)) : ''}`}
-              </span>
+              <h3 className="text-2xl font-extrabold text-white">{formatUZS(totalExpenseAmount)}</h3>
+              <p className="text-[11px] text-zinc-500 font-medium">
+                {expenses.length} ta operatsiya kiritilgan
+              </p>
             </div>
 
-            {lineChartData.length === 0 ? (
-              <div className="h-64 flex items-center justify-center text-zinc-500 text-sm">
-                Tanlangan davrda xarajatlar mavjud emas
+            {/* Card 2: Month-over-Month (MoM) Variance */}
+            <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                  MoM O‘zgarish (Variance)
+                </span>
+                <div
+                  className={`p-2.5 rounded-xl border ${
+                    momVariance > 0
+                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                      : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  }`}
+                >
+                  {momVariance > 0 ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                </div>
               </div>
-            ) : (
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={lineChartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
-                    <XAxis dataKey="date" stroke="#a1a1aa" />
-                    <YAxis tickFormatter={(val) => `${Math.round(val / 1000)}k`} stroke="#71717a" />
-                    <Tooltip
-                      formatter={(val: any) => [formatUZS(val), 'Xarajat']}
-                      contentStyle={{ background: '#18181b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="total"
-                      stroke="#f97316"
-                      strokeWidth={3}
-                      dot={{ fill: '#facc15', r: 5 }}
-                      activeDot={{ r: 8 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="flex items-baseline gap-2">
+                <h3
+                  className={`text-2xl font-extrabold ${
+                    momVariance > 0 ? 'text-rose-400' : 'text-emerald-400'
+                  }`}
+                >
+                  {momVariance > 0 ? `+${momVariance.toFixed(1)}%` : `${momVariance.toFixed(1)}%`}
+                </h3>
               </div>
-            )}
+              <p className="text-[11px] text-zinc-500 font-medium">
+                O‘tgan davrga ({formatUZS(prevTotalExpenseAmount)}) nisbatan
+              </p>
+            </div>
+
+            {/* Card 3: Average Daily Expense */}
+            <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                  O‘rtacha Kunlik Xarajat
+                </span>
+                <div className="p-2.5 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/20">
+                  <CalendarDays size={20} />
+                </div>
+              </div>
+              <h3 className="text-2xl font-extrabold text-amber-400">{formatUZS(avgDailyExpense)}</h3>
+              <p className="text-[11px] text-zinc-500 font-medium">
+                {daysInPeriod} kun uchun o‘rtacha kunlik
+              </p>
+            </div>
+
+            {/* Card 4: Largest Single Expense */}
+            <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                  Eng Katta Xarajat
+                </span>
+                <div className="p-2.5 rounded-xl bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                  <Flame size={20} />
+                </div>
+              </div>
+              {largestExpense ? (
+                <div>
+                  <h3 className="text-xl font-extrabold text-yellow-400 truncate">
+                    {formatUZS(largestExpense.value)}
+                  </h3>
+                  <div className="flex items-center justify-between mt-1 text-[11px] text-zinc-300">
+                    <span className="font-semibold truncate max-w-[130px]" title={largestExpense.name}>
+                      {largestExpense.name}
+                    </span>
+                    {largestExpense.receiptUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedReceiptUrl(largestExpense.receiptUrl || null)}
+                        className="inline-flex items-center gap-1 text-orange-400 hover:underline"
+                      >
+                        <Eye size={12} /> Chek
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500 font-medium">Mavjud emas</p>
+              )}
+            </div>
           </div>
 
-          {/* Charts Row: Category Pie Chart & Conditional Branch Bar Chart */}
+          {/* FEATURE 2: TOP SPENDING CATEGORIES & LINE GRAPH ROW */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Top 5 Spending Categories Section */}
+            <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-6 shadow-md space-y-4 lg:col-span-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Award size={20} className="text-yellow-400" />
+                  <h3 className="text-base font-bold text-white">Top 5 Xarajat Kategoriyalari</h3>
+                </div>
+              </div>
+
+              {top5Categories.length === 0 ? (
+                <p className="text-zinc-500 text-sm text-center py-10">Kategoriyalar mavjud emas</p>
+              ) : (
+                <div className="space-y-4">
+                  {top5Categories.map((cat, index) => (
+                    <div key={cat.name} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="text-zinc-200 flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-zinc-800 text-orange-400 text-[10px] font-extrabold flex items-center justify-center">
+                            #{index + 1}
+                          </span>
+                          {cat.name}
+                        </span>
+                        <div className="text-right">
+                          <span className="text-white font-bold">{formatUZS(cat.amount)}</span>
+                          <span className="text-zinc-400 text-[11px] ml-1 font-medium">
+                            ({cat.percentage.toFixed(1)}%)
+                          </span>
+                        </div>
+                      </div>
+                      {/* Visual Progress Bar */}
+                      <div className="w-full h-2 bg-[#0d0d0f] rounded-full overflow-hidden border border-zinc-800">
+                        <div
+                          className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-300"
+                          style={{ width: `${Math.min(cat.percentage, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Chronological Line Chart: Expenses Dynamic Trend */}
+            <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-6 shadow-md lg:col-span-2">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <LineIcon size={20} className="text-orange-400" />
+                  <h3 className="text-base font-bold text-white">
+                    Xarajatlar Dinamikasi ({activeBranchName})
+                  </h3>
+                </div>
+                <span className="text-xs font-semibold text-zinc-400 bg-[#0d0d0f] px-3 py-1 rounded-lg border border-zinc-800">
+                  {filterMode === 'quick'
+                    ? quickRange === '7days'
+                      ? 'Oxirgi 7 Kun'
+                      : quickRange === '30days'
+                      ? 'Oxirgi 30 Kun'
+                      : 'Oxirgi 365 Kun'
+                    : `${selectedYear}-Yil ${selectedMonth ? getMonthName(Number(selectedMonth)) : ''}`}
+                </span>
+              </div>
+
+              {lineChartData.length === 0 ? (
+                <div className="h-64 flex items-center justify-center text-zinc-500 text-sm">
+                  Tanlangan davrda xarajatlar mavjud emas
+                </div>
+              ) : (
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={lineChartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
+                      <XAxis dataKey="date" stroke="#a1a1aa" />
+                      <YAxis tickFormatter={(val) => `${Math.round(val / 1000)}k`} stroke="#71717a" />
+                      <Tooltip
+                        formatter={(val: any) => [formatUZS(val), 'Xarajat']}
+                        contentStyle={{ background: '#18181b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total"
+                        stroke="#f97316"
+                        strokeWidth={3}
+                        dot={{ fill: '#facc15', r: 5 }}
+                        activeDot={{ r: 8 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* FEATURE 3: CATEGORY PIE CHART & CONDITIONAL BRANCH BAR CHART ROW */}
           <div className={`grid grid-cols-1 ${selectedBranchId === '' ? 'lg:grid-cols-2' : 'grid-cols-1'} gap-6`}>
-            {/* 1. Category Pie Chart with Custom High-Contrast Tooltip */}
+            {/* Category Pie Chart */}
             <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-6 shadow-md">
               <div className="flex items-center gap-2 mb-4">
                 <PieIcon size={20} className="text-orange-400" />
@@ -492,7 +710,7 @@ export const ExpensesStatsPage: React.FC = () => {
               )}
             </div>
 
-            {/* 2. Branch Comparison Bar Chart (ONLY shown when Overall/Hammasi is selected) */}
+            {/* Branch Comparison Bar Chart (ONLY shown when Overall/Hammasi is selected) */}
             {selectedBranchId === '' && (
               <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-6 shadow-md">
                 <div className="flex items-center gap-2 mb-4">
@@ -530,6 +748,13 @@ export const ExpensesStatsPage: React.FC = () => {
           </div>
         </>
       )}
+
+      {/* Receipt Image Viewer Modal */}
+      <ReceiptImageModal
+        isOpen={!!selectedReceiptUrl}
+        receiptUrl={selectedReceiptUrl}
+        onClose={() => setSelectedReceiptUrl(null)}
+      />
     </div>
   );
 };
