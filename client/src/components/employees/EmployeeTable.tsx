@@ -12,12 +12,12 @@ interface EmployeeTableProps {
 
 export const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, loading, onEdit }) => {
   if (loading) {
-    return <p className="text-slate-400 p-4">Yuklanmoqda...</p>;
+    return <p className="text-zinc-400 p-4">Yuklanmoqda...</p>;
   }
 
   if (employees.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-zinc-500">
         <Users size={40} className="mx-auto opacity-30 mb-2" />
         <p>Hali xodimlar ro‘yxatdan o‘tkazilmagan</p>
       </div>
@@ -25,7 +25,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, loading
   }
 
   return (
-    <TableWrapper headers={['Ism Familiya', 'Telefon', 'Rol / Huquq', 'Baza Oyligi (UZS)', 'Holat', 'Amallar']}>
+    <TableWrapper headers={['Ism Familiya', 'Telefon', 'Rol / Huquq', 'Oxirgi Maoshi', 'Holat', 'Amallar']}>
       {employees.map((emp) => (
         <EmployeeTableRow key={emp.id} employee={emp} onEdit={onEdit} />
       ))}

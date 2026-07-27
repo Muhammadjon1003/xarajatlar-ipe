@@ -10,17 +10,19 @@ interface EmployeeTableRowProps {
 }
 
 export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({ employee, onEdit }) => {
+  const hasSalary = employee.defaultBaseSalary && Number(employee.defaultBaseSalary) > 0;
+
   return (
-    <tr className="hover:bg-slate-800/40 transition-colors">
-      <td className="px-5 py-3.5 font-bold text-slate-100">
+    <tr className="hover:bg-zinc-800/40 transition-colors">
+      <td className="px-5 py-3.5 font-bold text-zinc-100">
         {employee.firstName} {employee.lastName}
       </td>
-      <td className="px-5 py-3.5 text-slate-400">{employee.phone || '-'}</td>
+      <td className="px-5 py-3.5 text-zinc-400">{employee.phone || '-'}</td>
       <td className="px-5 py-3.5">
         <Badge status={employee.role?.displayName || 'Xodim'} />
       </td>
-      <td className="px-5 py-3.5 font-bold text-emerald-400">
-        {formatUZS(employee.defaultBaseSalary)}
+      <td className="px-5 py-3.5 font-bold text-orange-400">
+        {hasSalary ? formatUZS(employee.defaultBaseSalary!) : '-'}
       </td>
       <td className="px-5 py-3.5">
         {employee.isActive ? (
@@ -36,7 +38,7 @@ export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({ employee, on
       <td className="px-5 py-3.5 text-right">
         <button
           onClick={() => onEdit(employee)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-colors text-xs font-semibold"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-colors text-xs font-semibold"
         >
           <Edit size={14} /> Tahrirlash
         </button>

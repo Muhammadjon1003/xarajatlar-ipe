@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Employee, Role } from '../../types';
 import { ModalWrapper } from '../common/ModalWrapper';
 import { Input } from '../common/Input';
-import { CurrencyInput } from '../common/CurrencyInput';
 import { Button } from '../common/Button';
 
 interface EmployeeModalFormProps {
@@ -25,7 +24,6 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState('');
-  const [defaultBaseSalary, setDefaultBaseSalary] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -36,16 +34,12 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
       setPhone(editingEmployee.phone || '');
       setPassword('');
       setRoleId(editingEmployee.roleId || editingEmployee.role?.id || '');
-      setDefaultBaseSalary(
-        editingEmployee.defaultBaseSalary ? editingEmployee.defaultBaseSalary.toString() : ''
-      );
       setIsActive(editingEmployee.isActive);
     } else {
       setFirstName('');
       setLastName('');
       setPhone('');
       setPassword('');
-      setDefaultBaseSalary(''); // Default null (empty) when adding new employee
       setIsActive(true);
       if (roles.length > 0) setRoleId(roles[0].id);
     }
@@ -61,7 +55,6 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
         phone: phone || null,
         password: password || undefined,
         roleId,
-        defaultBaseSalary: defaultBaseSalary ? Number(defaultBaseSalary) : null, // Null if unassigned
         isActive,
       });
       onClose();
@@ -112,36 +105,22 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wide">
-              Rol *
-            </label>
-            <select
-              className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
-              value={roleId}
-              onChange={(e) => setRoleId(e.target.value)}
-              required
-            >
-              {roles.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.displayName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <CurrencyInput
-              label="Baza Oyligi (Ixtiyoriy)"
-              value={defaultBaseSalary}
-              onChange={(val) => setDefaultBaseSalary(val)}
-              placeholder="Kiritilmagan (Null)"
-            />
-            <span className="block text-[11px] text-zinc-500 mt-1">
-              (Oylik vedomostda kiritilganda avtomatik yangilanadi)
-            </span>
-          </div>
+        <div>
+          <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wide">
+            Rol / Lavozim *
+          </label>
+          <select
+            className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
+            value={roleId}
+            onChange={(e) => setRoleId(e.target.value)}
+            required
+          >
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.displayName}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex items-center gap-2 pt-1">
