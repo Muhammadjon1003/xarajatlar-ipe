@@ -26,10 +26,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'expenses-input', label: 'Xarajat Kiritish', icon: PlusCircle },
     { id: 'expenses-stats', label: 'Xarajat Tahlili & Stats', icon: BarChart3 },
     { id: 'expenses-ledger', label: 'Xarajat Daftari (Ledger)', icon: BookOpen },
-    { id: 'salaries', label: 'Oyliklar Vedomosti', icon: Banknote },
+    { id: 'salaries', label: 'Oyliklarni Hisoblash', icon: Banknote },
     { id: 'employees', label: 'Xodimlar Shtati', icon: Users },
     { id: 'advances', label: 'Oylik Avanslar', icon: Clock },
-    { id: 'shifts', label: 'Smena Almashtirish', icon: ArrowRightLeft },
+    { id: 'shifts', label: 'Zamena', icon: ArrowRightLeft },
     { id: 'branches-categories', label: 'Filial & Kategoriyalar', icon: Building2 },
   ];
 

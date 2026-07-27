@@ -44,7 +44,7 @@ export const ShiftsPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Smenani o‘chirmoqchimisiz?')) return;
+    if (!window.confirm('Zamanani o‘chirmoqchimisiz?')) return;
     try {
       await api.delete(`/shifts/${id}`);
       fetchShiftsAndEmployees();
@@ -56,11 +56,11 @@ export const ShiftsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Bir Martalik Smena Almashtirish"
+        title="Zamena"
         subtitle="Kelmagan xodim maoshidan ushlab, uning o‘rniga chiqqan xodimga oylik sifatida o‘tkazish"
         action={
           <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
-            Smena Almashtirish Qo‘shish
+            Zamena Qo‘shish
           </Button>
         }
       />

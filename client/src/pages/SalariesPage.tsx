@@ -62,8 +62,8 @@ export const SalariesPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Oylik Maoshlar Vedomosti"
-        subtitle="Xodimlarning maoshini kiritish/yangilash va smena va avans ushlanmalari bo‘yicha oylik hisobot"
+        title="Oyliklarni Hisoblash"
+        subtitle="Xodimlar uchun oylik maosh kiritish, avans va zamena ushlanmalarini hisoblash"
       />
 
       <SalaryFilters

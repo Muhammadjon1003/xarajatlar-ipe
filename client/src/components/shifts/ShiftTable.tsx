@@ -25,7 +25,7 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({
     return (
       <div className="text-center py-12 text-slate-500">
         <ArrowRightLeft size={40} className="mx-auto opacity-30 mb-2" />
-        <p>Hali smena almashtirishlar mavjud emas</p>
+        <p>Hali zamanalar mavjud emas</p>
       </div>
     );
   }
@@ -36,7 +36,7 @@ export const ShiftTable: React.FC<ShiftTableProps> = ({
         'Sana',
         'Kelmagan Xodim (Ushlanadi)',
         'O‘rniga Chiqqan (Qo‘shiladi)',
-        'Smena Haqi (UZS)',
+        'Zamena Haqi (UZS)',
         'Izoh',
         'Holat',
         'Amallar',

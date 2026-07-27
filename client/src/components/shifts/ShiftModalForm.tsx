@@ -58,7 +58,7 @@ export const ShiftModalForm: React.FC<ShiftModalFormProps> = ({
   };
 
   return (
-    <ModalWrapper title="Smena Almashtirish Yozish" isOpen={isOpen} onClose={onClose}>
+    <ModalWrapper title="Zamena Yozish" isOpen={isOpen} onClose={onClose}>
       <form onSubmit={handleSubmitForm} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -100,7 +100,7 @@ export const ShiftModalForm: React.FC<ShiftModalFormProps> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <Input
-            label="Smena Haq Qiymati (UZS) *"
+            label="Zamena Haq Qiymati (UZS) *"
             type="number"
             placeholder="250000"
             value={amount}
@@ -136,7 +136,7 @@ export const ShiftModalForm: React.FC<ShiftModalFormProps> = ({
             Bekor Qilish
           </Button>
           <Button variant="primary" type="submit" disabled={loading}>
-            {loading ? 'Saqlanmoqda...' : 'Smenani Saqlash'}
+            {loading ? 'Saqlanmoqda...' : 'Zamanani Saqlash'}
           </Button>
         </div>
       </form>
