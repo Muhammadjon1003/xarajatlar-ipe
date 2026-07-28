@@ -17,7 +17,13 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     if (employeeId && typeof employeeId === 'string') whereClause.employeeId = employeeId;
 
     const salaries = await prisma.monthlySalary.findMany({
-      where: whereClause,
+      where: {
+        ...whereClause,
+        // Only show EMPLOYEE and MANAGER roles in salary sections
+        employee: {
+          role: { code: { in: ['EMPLOYEE', 'MANAGER'] } },
+        },
+      },
       include: {
         employee: {
           select: {
@@ -26,7 +32,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
             lastName: true,
             phone: true,
             defaultBaseSalary: true,
-            role: { select: { displayName: true } },
+            role: { select: { displayName: true, code: true } },
           },
         },
       },
@@ -57,8 +63,13 @@ router.post(
       const startDate = new Date(targetYear, targetMonth - 1, 1);
       const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
 
+      // Only calculate payroll for EMPLOYEE and MANAGER roles
       const employees = await prisma.employee.findMany({
-        where: { isActive: true },
+        where: {
+          isActive: true,
+          role: { code: { in: ['EMPLOYEE', 'MANAGER'] } },
+        },
+        include: { role: true },
       });
 
       const results = [];

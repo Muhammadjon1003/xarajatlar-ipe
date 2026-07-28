@@ -48,8 +48,8 @@ export const EmployeesPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Xodimlar Shtati"
-        subtitle="Tizimdagi xodimlarning lavozimlari, maosh bazasi va ruxsat darajalari"
+        title="Xodimlar va Rollar"
+        subtitle="Tizimdagi barcha xodimlar, ularning lavozimlari va ruxsat darajalari"
         action={
           <Button variant="primary" icon={<Plus size={18} />} onClick={() => openModal()}>
             Yangi Xodim Qo‘shish

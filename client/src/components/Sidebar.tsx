@@ -29,7 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'expenses-ledger', label: 'Xarajat Daftari (Ledger)', icon: BookOpen },
     { id: 'salaries', label: 'Oyliklarni Hisoblash', icon: Banknote },
     { id: 'salary-payout', label: 'Oyliklarni Berish', icon: DollarSign },
-    { id: 'employees', label: 'Xodimlar Shtati', icon: Users },
+    { id: 'employees', label: 'Xodimlar va Rollar', icon: Users },
     { id: 'advances', label: 'Oylik Avanslar', icon: Clock },
     { id: 'shifts', label: 'Zamena', icon: ArrowRightLeft },
     { id: 'branches-categories', label: 'Filial & Kategoriyalar', icon: Building2 },
