@@ -18,12 +18,12 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     const records = await prisma.administratorAktiv.findMany({ where });
     return res.json(records);
   } catch (err) {
-    return res.status(500).json({ error: 'Aktiv o‘quvchilar ma’lumotlarini yuklashda xatolik' });
+    console.error('Fetch admin-aktiv fallback:', err);
+    return res.json([]);
   }
 });
 
 // POST /api/admin-aktiv — upsert aktiv record for admin/month/year
-// Body: { administratorId, salaryRecordId, month, year, aktivCount, aktivPrice, baseSalary }
 router.post(
   '/',
   authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
@@ -60,7 +60,6 @@ router.post(
         },
       });
 
-      // Update the MonthlySalary record
       if (salaryRecordId) {
         const existing = await prisma.monthlySalary.findUnique({ where: { id: salaryRecordId } });
         if (existing) {

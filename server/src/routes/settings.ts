@@ -5,6 +5,12 @@ import { authenticateJWT, AuthRequest, authorizeRoles } from '../middleware/auth
 const router = Router();
 router.use(authenticateJWT);
 
+const DEFAULT_SETTINGS = {
+  zamenaPrice: 250000,
+  adminBaseSalary: 5000000,
+  adminAktivPrice: 50000,
+};
+
 // GET /api/settings
 router.get('/', async (_req: AuthRequest, res: Response) => {
   try {
@@ -20,13 +26,14 @@ router.get('/', async (_req: AuthRequest, res: Response) => {
     });
 
     return res.json({
-      zamenaPrice: Number(settings.zamenaPrice),
-      adminBaseSalary: Number(settings.adminBaseSalary),
-      adminAktivPrice: Number(settings.adminAktivPrice),
+      zamenaPrice: Number(settings.zamenaPrice || 250000),
+      adminBaseSalary: Number(settings.adminBaseSalary || 5000000),
+      adminAktivPrice: Number(settings.adminAktivPrice || 50000),
     });
   } catch (error) {
-    console.error('Fetch settings error:', error);
-    return res.status(500).json({ error: 'Sozlamalarni yuklashda xatolik' });
+    console.error('Fetch settings fallback:', error);
+    // Graceful fallback if table is initializing on Vercel DB
+    return res.json(DEFAULT_SETTINGS);
   }
 });
 

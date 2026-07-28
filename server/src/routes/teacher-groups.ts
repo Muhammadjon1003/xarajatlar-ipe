@@ -22,12 +22,12 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 
     return res.json(groups);
   } catch (err) {
-    return res.status(500).json({ error: 'Guruhlarni yuklashda xatolik' });
+    console.error('Fetch teacher-groups fallback:', err);
+    return res.json([]);
   }
 });
 
 // POST /api/teacher-groups
-// Body: { teacherId, salaryRecordId, month, year, groups: [{ groupName, studentCount, archiveCount, groupSalary }] }
 router.post(
   '/',
   authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
@@ -39,7 +39,6 @@ router.post(
         return res.status(400).json({ error: "teacherId, month, year va guruhlar ro'yxati shart" });
       }
 
-      // Delete existing groups for this teacher/month/year and re-insert
       await prisma.teacherGroupSalary.deleteMany({
         where: { teacherId, month: Number(month), year: Number(year) },
       });
@@ -56,10 +55,8 @@ router.post(
         })),
       });
 
-      // Calculate total salary from all groups
       const totalSalary = groups.reduce((sum: number, g: any) => sum + Number(g.groupSalary || 0), 0);
 
-      // Update the MonthlySalary record
       if (salaryRecordId) {
         const existing = await prisma.monthlySalary.findUnique({ where: { id: salaryRecordId } });
         if (existing) {
@@ -74,7 +71,6 @@ router.post(
             where: { id: salaryRecordId },
             data: { baseSalary: totalSalary, finalPayout },
           });
-          // Update employee's defaultBaseSalary
           await prisma.employee.update({
             where: { id: teacherId },
             data: { defaultBaseSalary: totalSalary },
