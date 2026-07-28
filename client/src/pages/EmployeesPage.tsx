@@ -7,9 +7,19 @@ import { EmployeeTable } from '../components/employees/EmployeeTable';
 import { EmployeeModalForm } from '../components/employees/EmployeeModalForm';
 import { Plus } from 'lucide-react';
 
+const DEFAULT_FALLBACK_ROLES: Role[] = [
+  { id: '1', code: 'SUPER_ADMIN', displayName: 'Direktor' },
+  { id: '2', code: 'MANAGER', displayName: 'Menejer' },
+  { id: '3', code: 'ADMINISTRATOR', displayName: 'Administrator' },
+  { id: '4', code: 'TEACHER', displayName: 'O‘qituvchi' },
+  { id: '5', code: 'EXPENSE_CLERK', displayName: 'Xarajatlar Hisobchisi' },
+  { id: '6', code: 'PAYROLL_ACCOUNTANT', displayName: 'Oylik Hisobchisi' },
+  { id: '7', code: 'EMPLOYEE', displayName: 'Xodim' },
+];
+
 export const EmployeesPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [roles, setRoles] = useState<Role[]>(DEFAULT_FALLBACK_ROLES);
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,7 +33,9 @@ export const EmployeesPage: React.FC = () => {
     try {
       const [empRes, roleRes] = await Promise.all([api.get('/employees'), api.get('/auth/roles')]);
       setEmployees(empRes.data);
-      setRoles(roleRes.data);
+      if (roleRes.data && roleRes.data.length > 0) {
+        setRoles(roleRes.data);
+      }
     } catch (err) {
       console.error(err);
     } finally {

@@ -6,6 +6,27 @@ import { authenticateJWT, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+const DEFAULT_ROLES = [
+  { code: 'SUPER_ADMIN', displayName: 'Direktor' },
+  { code: 'MANAGER', displayName: 'Menejer' },
+  { code: 'ADMINISTRATOR', displayName: 'Administrator' },
+  { code: 'TEACHER', displayName: 'O‘qituvchi' },
+  { code: 'EXPENSE_CLERK', displayName: 'Xarajatlar Hisobchisi' },
+  { code: 'PAYROLL_ACCOUNTANT', displayName: 'Oylik Hisobchisi' },
+  { code: 'EMPLOYEE', displayName: 'Xodim' },
+];
+
+// Ensure all standard roles exist in DB
+async function ensureDefaultRoles() {
+  for (const r of DEFAULT_ROLES) {
+    await prisma.role.upsert({
+      where: { code: r.code },
+      update: { displayName: r.displayName },
+      create: r,
+    });
+  }
+}
+
 // POST /api/auth/login
 router.post('/login', async (req: AuthRequest, res: Response) => {
   try {
@@ -58,8 +79,14 @@ router.get('/me', authenticateJWT, async (req: AuthRequest, res: Response) => {
   return res.json({ user: req.user });
 });
 
-// GET /api/auth/roles
+// GET /api/auth/roles (Auto-ensures all 7 standard roles exist)
 router.get('/roles', authenticateJWT, async (_req: AuthRequest, res: Response) => {
+  try {
+    await ensureDefaultRoles();
+  } catch (e) {
+    console.error('Role auto-upsert warning:', e);
+  }
+
   const roles = await prisma.role.findMany({
     orderBy: { displayName: 'asc' },
   });
