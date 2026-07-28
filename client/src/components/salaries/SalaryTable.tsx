@@ -3,12 +3,10 @@ import { Banknote } from 'lucide-react';
 import { MonthlySalary } from '../../types';
 import { TableWrapper } from '../common/TableWrapper';
 import { SalaryTableRow } from './SalaryTableRow';
-import { Button } from '../common/Button';
 
 interface SalaryTableProps {
   salaries: MonthlySalary[];
   loading: boolean;
-  onCalculate: () => void;
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onUpdateBaseSalary: (id: string, newBaseSalary: number) => Promise<void>;
   onRefresh: () => void;
@@ -17,7 +15,6 @@ interface SalaryTableProps {
 export const SalaryTable: React.FC<SalaryTableProps> = ({
   salaries,
   loading,
-  onCalculate,
   onTogglePaid,
   onUpdateBaseSalary,
   onRefresh,
@@ -28,12 +25,11 @@ export const SalaryTable: React.FC<SalaryTableProps> = ({
 
   if (salaries.length === 0) {
     return (
-      <div className="text-center py-12 text-zinc-500">
-        <Banknote size={40} className="mx-auto opacity-30 mb-2" />
-        <p>Ushbu oy uchun hali oyliklar hisoblanmagan.</p>
-        <Button variant="secondary" className="mt-4" onClick={onCalculate}>
-          Hozir Hisoblash
-        </Button>
+      <div className="text-center py-12 text-zinc-500 bg-[#141417] border border-zinc-800 rounded-2xl">
+        <Banknote size={40} className="mx-auto opacity-30 mb-2 text-orange-400" />
+        <p className="text-sm font-semibold text-zinc-400">
+          Ushbu oy uchun mos keladigan xodimlar topilmadi
+        </p>
       </div>
     );
   }

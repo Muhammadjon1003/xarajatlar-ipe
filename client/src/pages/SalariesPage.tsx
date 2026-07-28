@@ -12,7 +12,6 @@ export const SalariesPage: React.FC = () => {
 
   const [salaries, setSalaries] = useState<MonthlySalary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [calculating, setCalculating] = useState(false);
 
   useEffect(() => {
     fetchSalaries();
@@ -21,25 +20,20 @@ export const SalariesPage: React.FC = () => {
   const fetchSalaries = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/salaries', { params: { month, year } });
-      setSalaries(res.data);
+      // 1. Fetch salaries for month/year
+      let res = await api.get('/salaries', { params: { month, year } });
+
+      // 2. If no salary records exist for this month/year, automatically initialize them
+      if (!res.data || res.data.length === 0) {
+        await api.post('/salaries/calculate', { month, year });
+        res = await api.get('/salaries', { params: { month, year } });
+      }
+
+      setSalaries(res.data || []);
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching salaries:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCalculatePayroll = async () => {
-    setCalculating(true);
-    try {
-      const res = await api.post('/salaries/calculate', { month, year });
-      alert(res.data.message || 'Oyliklar hisoblandi');
-      fetchSalaries();
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Hisoblashda xatolik');
-    } finally {
-      setCalculating(false);
     }
   };
 
@@ -72,14 +66,11 @@ export const SalariesPage: React.FC = () => {
         year={year}
         setYear={setYear}
         totalPayroll={totalPayroll}
-        calculating={calculating}
-        onCalculate={handleCalculatePayroll}
       />
 
       <SalaryTable
         salaries={salaries}
         loading={loading}
-        onCalculate={handleCalculatePayroll}
         onTogglePaid={togglePaidStatus}
         onUpdateBaseSalary={handleUpdateBaseSalary}
         onRefresh={fetchSalaries}

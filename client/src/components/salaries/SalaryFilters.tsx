@@ -1,6 +1,4 @@
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
-import { Button } from '../common/Button';
 import { getMonthName, formatUZS } from '../../utils/format';
 
 interface SalaryFiltersProps {
@@ -9,8 +7,6 @@ interface SalaryFiltersProps {
   year: number;
   setYear: (y: number) => void;
   totalPayroll: number;
-  calculating: boolean;
-  onCalculate: () => void;
 }
 
 export const SalaryFilters: React.FC<SalaryFiltersProps> = ({
@@ -19,16 +15,14 @@ export const SalaryFilters: React.FC<SalaryFiltersProps> = ({
   year,
   setYear,
   totalPayroll,
-  calculating,
-  onCalculate,
 }) => {
   return (
-    <div className="bg-slate-800/80 border border-slate-700/50 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+    <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
       <div className="flex gap-4 items-center">
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Oy</label>
+          <label className="block text-xs font-semibold text-zinc-400 mb-1">Oy</label>
           <select
-            className="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+            className="bg-[#0d0d0f] border border-zinc-800 rounded-xl px-3 py-1.5 text-sm font-bold text-zinc-100 focus:outline-none focus:border-orange-500"
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
           >
@@ -41,9 +35,9 @@ export const SalaryFilters: React.FC<SalaryFiltersProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-1">Yil</label>
+          <label className="block text-xs font-semibold text-zinc-400 mb-1">Yil</label>
           <select
-            className="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+            className="bg-[#0d0d0f] border border-zinc-800 rounded-xl px-3 py-1.5 text-sm font-bold text-zinc-100 focus:outline-none focus:border-orange-500"
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
           >
@@ -54,23 +48,13 @@ export const SalaryFilters: React.FC<SalaryFiltersProps> = ({
             ))}
           </select>
         </div>
-
-        <Button
-          variant="primary"
-          onClick={onCalculate}
-          disabled={calculating}
-          icon={<RefreshCw size={16} className={calculating ? 'animate-spin' : ''} />}
-          className="mt-4"
-        >
-          {calculating ? 'Hisoblanmoqda...' : 'Oyliklarni Hisoblash'}
-        </Button>
       </div>
 
       <div className="text-right">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block">
           {getMonthName(month)} {year} Jami Oylik Fondi
         </span>
-        <h2 className="text-xl font-extrabold text-emerald-400">{formatUZS(totalPayroll)}</h2>
+        <h2 className="text-xl font-extrabold text-orange-400">{formatUZS(totalPayroll)}</h2>
       </div>
     </div>
   );
