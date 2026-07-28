@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ModalWrapper } from '../common/ModalWrapper';
-import { CurrencyInput } from '../common/CurrencyInput';
 import { Button } from '../common/Button';
 import { formatUZS, getMonthName } from '../../utils/format';
-import { Award } from 'lucide-react';
+import { Award, Users, DollarSign, Calculator } from 'lucide-react';
 import api from '../../api/client';
 
 interface AdministratorSalaryModalProps {
@@ -29,9 +28,9 @@ export const AdministratorSalaryModal: React.FC<AdministratorSalaryModalProps> =
   initialBaseSalary,
   onSuccess,
 }) => {
-  const [baseSalary, setBaseSalary] = useState<string>('');
+  const [baseSalary, setBaseSalary] = useState<number>(initialBaseSalary || 5000000);
+  const [aktivPrice, setAktivPrice] = useState<number>(50000);
   const [aktivCount, setAktivCount] = useState<string>('');
-  const [aktivPrice, setAktivPrice] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
 
@@ -50,33 +49,31 @@ export const AdministratorSalaryModal: React.FC<AdministratorSalaryModalProps> =
       ]);
 
       const settings = settingsRes.data || {};
-      const defaultBase = settings.adminBaseSalary ? settings.adminBaseSalary.toString() : '5000000';
-      const defaultPrice = settings.adminAktivPrice ? settings.adminAktivPrice.toString() : '50000';
+      const defaultBase = settings.adminBaseSalary ? Number(settings.adminBaseSalary) : 5000000;
+      const defaultPrice = settings.adminAktivPrice ? Number(settings.adminAktivPrice) : 50000;
+
+      setAktivPrice(defaultPrice);
 
       if (aktivRes.data && aktivRes.data.length > 0) {
         const record = aktivRes.data[0];
-        setBaseSalary(record.baseSalary ? record.baseSalary.toString() : (initialBaseSalary ? initialBaseSalary.toString() : defaultBase));
-        setAktivCount(record.aktivCount ? record.aktivCount.toString() : '');
-        setAktivPrice(record.aktivPrice ? record.aktivPrice.toString() : defaultPrice);
+        setBaseSalary(record.baseSalary ? Number(record.baseSalary) : (initialBaseSalary || defaultBase));
+        setAktivCount(record.aktivCount !== undefined && record.aktivCount !== null ? record.aktivCount.toString() : '');
       } else {
-        setBaseSalary(initialBaseSalary ? initialBaseSalary.toString() : defaultBase);
+        setBaseSalary(initialBaseSalary || defaultBase);
         setAktivCount('');
-        setAktivPrice(defaultPrice);
       }
     } catch (err) {
       console.error(err);
-      setBaseSalary(initialBaseSalary ? initialBaseSalary.toString() : '5000000');
-      setAktivPrice('50000');
+      setBaseSalary(initialBaseSalary || 5000000);
+      setAktivPrice(50000);
     } finally {
       setFetching(false);
     }
   };
 
-  const baseNum = Number(baseSalary || 0);
   const countNum = Number(aktivCount || 0);
-  const priceNum = Number(aktivPrice || 0);
-  const aktivTotal = countNum * priceNum;
-  const totalSalary = baseNum + aktivTotal;
+  const aktivTotal = countNum * aktivPrice;
+  const totalSalary = baseSalary + aktivTotal;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,9 +84,9 @@ export const AdministratorSalaryModal: React.FC<AdministratorSalaryModalProps> =
         salaryRecordId,
         month,
         year,
-        baseSalary: baseNum,
+        baseSalary,
         aktivCount: countNum,
-        aktivPrice: priceNum,
+        aktivPrice,
       });
       onSuccess();
       onClose();
@@ -105,16 +102,23 @@ export const AdministratorSalaryModal: React.FC<AdministratorSalaryModalProps> =
       title={`Administrator Maoshi & Aktiv — ${administratorName}`}
       isOpen={isOpen}
       onClose={onClose}
+      maxWidthClass="max-w-xl"
     >
-      <div className="space-y-4">
-        <div className="flex items-center justify-between bg-[#0d0d0f] border border-zinc-800 rounded-xl p-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-zinc-400">
-            <Award size={16} className="text-amber-400" />
-            <span>Davr: {getMonthName(month)} {year}</span>
+      <div className="space-y-5">
+        {/* Overall Total Card */}
+        <div className="flex items-center justify-between bg-[#0d0d0f] border border-zinc-800 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/20">
+              <Award size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">Oylik Davri: {getMonthName(month)} {year}</p>
+              <p className="text-[11px] text-zinc-400">Baza maoshi va aktiv o‘quvchilar ustamasi hisoblanadi</p>
+            </div>
           </div>
           <div className="text-right">
-            <span className="text-[11px] text-zinc-500 uppercase tracking-wider block">Jami Oylik Maosh</span>
-            <span className="text-base font-extrabold text-amber-400">{formatUZS(totalSalary)}</span>
+            <span className="text-xs text-zinc-400 font-semibold uppercase tracking-wider block">Jami Oylik Maosh</span>
+            <span className="text-xl font-extrabold text-amber-400">{formatUZS(totalSalary)}</span>
           </div>
         </div>
 
@@ -124,53 +128,59 @@ export const AdministratorSalaryModal: React.FC<AdministratorSalaryModalProps> =
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <CurrencyInput
-              label="Baza Maoshi (UZS) *"
-              value={baseSalary}
-              onChange={(val) => setBaseSalary(val)}
-              placeholder="5 000 000"
-            />
+            {/* Read-Only Settings Summary */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-[#0d0d0f] border border-zinc-800/80 rounded-xl p-3.5 space-y-1">
+                <span className="text-[11px] font-semibold text-zinc-400 block uppercase tracking-wider">
+                  Baza Maoshi (Sozlamadan)
+                </span>
+                <span className="text-sm font-extrabold text-white block">
+                  {formatUZS(baseSalary)}
+                </span>
+              </div>
 
-            <div className="grid grid-cols-2 gap-3 bg-[#0d0d0f] border border-zinc-800 rounded-xl p-3.5">
+              <div className="bg-[#0d0d0f] border border-zinc-800/80 rounded-xl p-3.5 space-y-1">
+                <span className="text-[11px] font-semibold text-zinc-400 block uppercase tracking-wider">
+                  1 Aktiv O‘quvchi Narxi
+                </span>
+                <span className="text-sm font-extrabold text-emerald-400 block">
+                  {formatUZS(aktivPrice)}
+                </span>
+              </div>
+            </div>
+
+            {/* ONLY Input: Aktiv O'quvchilar Soni */}
+            <div className="bg-[#0d0d0f] border border-amber-500/20 rounded-2xl p-4 space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
+                <label className="block text-xs font-bold text-amber-400 mb-1.5 flex items-center gap-1.5">
+                  <Users size={15} />
                   Aktiv O‘quvchilar Soni *
                 </label>
                 <input
                   type="number"
                   min="0"
-                  placeholder="10"
-                  className="w-full bg-[#141417] border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-amber-500"
+                  required
+                  autoFocus
+                  placeholder="Masalan: 12"
+                  className="w-full bg-[#141417] border border-zinc-700 rounded-xl px-4 py-2.5 text-sm font-extrabold text-white focus:outline-none focus:border-amber-500"
                   value={aktivCount}
                   onChange={(e) => setAktivCount(e.target.value)}
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
-                  Bir Aktiv Narxi (UZS) *
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="50000"
-                  className="w-full bg-[#141417] border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-amber-500"
-                  value={aktivPrice}
-                  onChange={(e) => setAktivPrice(e.target.value)}
-                />
-              </div>
-
-              <div className="col-span-2 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-xs font-semibold">
-                <span className="text-zinc-400">Aktivlardan Ustama Daromad:</span>
-                <span className="text-emerald-400 font-extrabold">+{formatUZS(aktivTotal)}</span>
+              <div className="pt-3 border-t border-zinc-800 flex items-center justify-between text-xs font-semibold">
+                <span className="text-zinc-400">Aktivlardan Daromad Ustamasi:</span>
+                <span className="text-emerald-400 font-extrabold text-sm">
+                  +{formatUZS(aktivTotal)}
+                </span>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-zinc-800">
-              <Button type="button" variant="secondary" onClick={onClose} className="text-xs">
+            <div className="flex justify-end gap-3 pt-2 border-t border-zinc-800">
+              <Button type="button" variant="secondary" onClick={onClose}>
                 Bekor Qilish
               </Button>
-              <Button type="submit" variant="primary" disabled={loading} className="text-xs">
+              <Button type="submit" variant="primary" disabled={loading}>
                 {loading ? 'Saqlanmoqda...' : 'Maosh va Aktivni Saqlash'}
               </Button>
             </div>
