@@ -18,14 +18,14 @@ export const AdvanceTable: React.FC<AdvanceTableProps> = ({
   onDelete,
 }) => {
   if (loading) {
-    return <p className="text-slate-400 p-4">Yuklanmoqda...</p>;
+    return <p className="text-zinc-400 p-4">Yuklanmoqda...</p>;
   }
 
   if (advances.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-500">
-        <Clock size={40} className="mx-auto opacity-30 mb-2" />
-        <p>Hali avans so‘rovlari mavjud emas</p>
+      <div className="text-center py-12 text-zinc-500 bg-[#141417] border border-zinc-800 rounded-2xl">
+        <Clock size={40} className="mx-auto opacity-30 mb-2 text-orange-400" />
+        <p className="text-sm font-semibold text-zinc-400">Hali avans so‘rovlari mavjud emas</p>
       </div>
     );
   }
