@@ -13,6 +13,7 @@ import { AdvancesPage } from './pages/AdvancesPage';
 import { ShiftsPage } from './pages/ShiftsPage';
 import { BranchesCategoriesPage } from './pages/BranchesCategoriesPage';
 import { PriceSettingsPage } from './pages/PriceSettingsPage';
+import { MonthlyAnalysisPage } from './pages/MonthlyAnalysisPage';
 
 export const App: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -40,6 +41,8 @@ export const App: React.FC = () => {
         return <ExpensesStatsPage />;
       case 'expenses-ledger':
         return <ExpensesLedgerPage />;
+      case 'monthly-analysis':
+        return <MonthlyAnalysisPage />;
       case 'salaries':
         return <SalariesPage />;
       case 'salary-payout':
