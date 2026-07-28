@@ -12,7 +12,8 @@ import shiftRoutes from './routes/shifts';
 import salaryRoutes from './routes/salaries';
 import analyticsRoutes from './routes/analytics';
 import teacherGroupsRoutes from './routes/teacher-groups';
-import adminProbniyRoutes from './routes/admin-probniy';
+import adminAktivRoutes from './routes/admin-aktiv';
+import settingsRoutes from './routes/settings';
 
 dotenv.config();
 
@@ -33,7 +34,9 @@ app.use('/api/shifts', shiftRoutes);
 app.use('/api/salaries', salaryRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/teacher-groups', teacherGroupsRoutes);
-app.use('/api/admin-probniy', adminProbniyRoutes);
+app.use('/api/admin-aktiv', adminAktivRoutes);
+app.use('/api/admin-probniy', adminAktivRoutes); // Backward compatibility alias
+app.use('/api/settings', settingsRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

@@ -5,7 +5,7 @@ import { authenticateJWT, AuthRequest, authorizeRoles } from '../middleware/auth
 const router = Router();
 router.use(authenticateJWT);
 
-// GET /api/admin-probniy?administratorId=&month=&year=
+// GET /api/admin-aktiv?administratorId=&month=&year=
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     const { administratorId, month, year } = req.query;
@@ -15,32 +15,32 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     if (month) where.month = Number(month);
     if (year) where.year = Number(year);
 
-    const records = await prisma.administratorProbniy.findMany({ where });
+    const records = await prisma.administratorAktiv.findMany({ where });
     return res.json(records);
   } catch (err) {
-    return res.status(500).json({ error: 'Probniy ma\'lumotlarini yuklashda xatolik' });
+    return res.status(500).json({ error: 'Aktiv o‘quvchilar ma’lumotlarini yuklashda xatolik' });
   }
 });
 
-// POST /api/admin-probniy — upsert probniy record for admin/month/year
-// Body: { administratorId, salaryRecordId, month, year, probniyCount, probniyPrice, baseSalary }
+// POST /api/admin-aktiv — upsert aktiv record for admin/month/year
+// Body: { administratorId, salaryRecordId, month, year, aktivCount, aktivPrice, baseSalary }
 router.post(
   '/',
   authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
   async (req: AuthRequest, res: Response) => {
     try {
-      const { administratorId, salaryRecordId, month, year, probniyCount, probniyPrice, baseSalary } = req.body;
+      const { administratorId, salaryRecordId, month, year, aktivCount, aktivPrice, baseSalary } = req.body;
 
       if (!administratorId || !month || !year) {
         return res.status(400).json({ error: 'administratorId, month va year shart' });
       }
 
       const base = Number(baseSalary || 0);
-      const count = Number(probniyCount || 0);
-      const price = Number(probniyPrice || 0);
+      const count = Number(aktivCount || 0);
+      const price = Number(aktivPrice || 0);
       const totalSalary = base + count * price;
 
-      const record = await prisma.administratorProbniy.upsert({
+      const record = await prisma.administratorAktiv.upsert({
         where: {
           administratorId_month_year: {
             administratorId,
@@ -48,13 +48,13 @@ router.post(
             year: Number(year),
           },
         },
-        update: { probniyCount: count, probniyPrice: price, baseSalary: base, totalSalary },
+        update: { aktivCount: count, aktivPrice: price, baseSalary: base, totalSalary },
         create: {
           administratorId,
           month: Number(month),
           year: Number(year),
-          probniyCount: count,
-          probniyPrice: price,
+          aktivCount: count,
+          aktivPrice: price,
           baseSalary: base,
           totalSalary,
         },
@@ -84,8 +84,8 @@ router.post(
 
       return res.status(201).json({ record, totalSalary });
     } catch (err) {
-      console.error('Admin probniy save error:', err);
-      return res.status(500).json({ error: 'Probniy ma\'lumotlarini saqlashda xatolik' });
+      console.error('Admin aktiv save error:', err);
+      return res.status(500).json({ error: 'Aktiv ma’lumotlarini saqlashda xatolik' });
     }
   }
 );

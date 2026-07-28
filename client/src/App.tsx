@@ -12,6 +12,7 @@ import { EmployeesPage } from './pages/EmployeesPage';
 import { AdvancesPage } from './pages/AdvancesPage';
 import { ShiftsPage } from './pages/ShiftsPage';
 import { BranchesCategoriesPage } from './pages/BranchesCategoriesPage';
+import { PriceSettingsPage } from './pages/PriceSettingsPage';
 
 export const App: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -51,6 +52,8 @@ export const App: React.FC = () => {
         return <ShiftsPage />;
       case 'branches-categories':
         return <BranchesCategoriesPage />;
+      case 'price-settings':
+        return <PriceSettingsPage />;
       default:
         return <ExpensesInputPage />;
     }

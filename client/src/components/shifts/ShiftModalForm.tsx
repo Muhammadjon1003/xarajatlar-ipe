@@ -4,6 +4,7 @@ import { ModalWrapper } from '../common/ModalWrapper';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { formatUZS } from '../../utils/format';
+import api from '../../api/client';
 
 interface ShiftModalFormProps {
   isOpen: boolean;
@@ -26,16 +27,32 @@ export const ShiftModalForm: React.FC<ShiftModalFormProps> = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (employees.length > 1) {
-      setAbsentEmployeeId(employees[0].id);
-      setCoveringEmployeeId(employees[1].id);
+    if (isOpen) {
+      fetchDefaultZamenaPrice();
+      if (employees.length > 1) {
+        setAbsentEmployeeId(employees[0].id);
+        setCoveringEmployeeId(employees[1].id);
+      }
     }
-  }, [employees]);
+  }, [isOpen, employees]);
+
+  const fetchDefaultZamenaPrice = async () => {
+    try {
+      const res = await api.get('/settings');
+      if (res.data && res.data.zamenaPrice) {
+        setAmount(res.data.zamenaPrice.toString());
+      } else {
+        setAmount('250000');
+      }
+    } catch (err) {
+      setAmount('250000');
+    }
+  };
 
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (absentEmployeeId === coveringEmployeeId) {
-      alert('Kelmagan va orniga chiqqan xodim bir xil bolishi mumkin emas');
+      alert('Kelmagan va o‘rniga chiqqan xodim bir xil bo‘lishi mumkin emas');
       return;
     }
     setLoading(true);
@@ -47,7 +64,6 @@ export const ShiftModalForm: React.FC<ShiftModalFormProps> = ({
         coveringEmployeeId,
         description,
       });
-      setAmount('');
       setDescription('');
       onClose();
     } catch (err: any) {
@@ -66,7 +82,7 @@ export const ShiftModalForm: React.FC<ShiftModalFormProps> = ({
               Kelmagan Xodim (Ushlanma) *
             </label>
             <select
-              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
               value={absentEmployeeId}
               onChange={(e) => setAbsentEmployeeId(e.target.value)}
               required
@@ -84,7 +100,7 @@ export const ShiftModalForm: React.FC<ShiftModalFormProps> = ({
               O‘rniga Chiqqan Xodim (Qo‘shimcha) *
             </label>
             <select
-              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
               value={coveringEmployeeId}
               onChange={(e) => setCoveringEmployeeId(e.target.value)}
               required
@@ -119,19 +135,19 @@ export const ShiftModalForm: React.FC<ShiftModalFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide">
+          <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wide">
             Izoh / Sabab
           </label>
           <textarea
-            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-[#0d0d0f] border border-zinc-800 rounded-xl p-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-orange-500"
             rows={2}
-            placeholder="Kasallik tufayli smena almashtirildi..."
+            placeholder="Kasallik tufayli zamena qilindi..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
           <Button variant="secondary" type="button" onClick={onClose}>
             Bekor Qilish
           </Button>

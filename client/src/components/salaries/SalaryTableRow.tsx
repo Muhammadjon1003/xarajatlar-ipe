@@ -109,7 +109,7 @@ export const SalaryTableRow: React.FC<SalaryTableRowProps> = ({
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-400 text-zinc-950 border border-amber-400 hover:bg-amber-300 transition-all shadow-sm"
             >
               <Award size={14} />
-              <span>Probniy & Oylik</span>
+              <span>Aktiv & Oylik</span>
               {Number(salary.baseSalary) > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 rounded bg-zinc-950/20 text-[10px]">
                   {formatUZS(salary.baseSalary)}

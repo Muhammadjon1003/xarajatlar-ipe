@@ -11,6 +11,7 @@ import {
   Building2,
   TrendingDown,
   DollarSign,
+  Tag,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -33,6 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'advances', label: 'Oylik Avanslar', icon: Clock },
     { id: 'shifts', label: 'Zamena', icon: ArrowRightLeft },
     { id: 'branches-categories', label: 'Filial & Kategoriyalar', icon: Building2 },
+    { id: 'price-settings', label: 'Narx Sozlamalari', icon: Tag },
   ];
 
   return (
