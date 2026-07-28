@@ -76,8 +76,8 @@ export const LoginPage: React.FC = () => {
         </form>
 
         <div className="mt-6 pt-4 border-t border-slate-800 text-center text-xs text-slate-500">
-          Super Admin: <span className="text-indigo-400 font-semibold">+998901234567</span> /{' '}
-          <span className="text-indigo-400 font-semibold">admin123</span>
+          Direktor: <span className="text-orange-400 font-semibold">+998901234567</span> /{' '}
+          <span className="text-orange-400 font-semibold">admin123</span>
         </div>
       </div>
     </div>

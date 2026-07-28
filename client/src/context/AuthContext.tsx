@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           lastName: 'Boshliq',
           phone: '+998901234567',
           roleCode: 'SUPER_ADMIN',
-          roleDisplayName: 'Super Admin (Testing Mode)',
+          roleDisplayName: 'Direktor (Test Rejimi)',
         };
   });
 

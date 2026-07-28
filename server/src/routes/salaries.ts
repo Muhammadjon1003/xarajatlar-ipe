@@ -21,7 +21,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         ...whereClause,
         // Only show EMPLOYEE and MANAGER roles in salary sections
         employee: {
-          role: { code: { in: ['EMPLOYEE', 'MANAGER'] } },
+          role: { code: { in: ['EMPLOYEE', 'MANAGER', 'TEACHER', 'ADMINISTRATOR'] } },
         },
       },
       include: {
@@ -67,7 +67,7 @@ router.post(
       const employees = await prisma.employee.findMany({
         where: {
           isActive: true,
-          role: { code: { in: ['EMPLOYEE', 'MANAGER'] } },
+          role: { code: { in: ['EMPLOYEE', 'MANAGER', 'TEACHER', 'ADMINISTRATOR'] } },
         },
         include: { role: true },
       });
