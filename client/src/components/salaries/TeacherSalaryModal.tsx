@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ModalWrapper } from '../common/ModalWrapper';
 import { Button } from '../common/Button';
 import { formatUZS, getMonthName } from '../../utils/format';
-import { Plus, Trash2, BookOpen } from 'lucide-react';
+import { Plus, Trash2, BookOpen, Users, UserCheck } from 'lucide-react';
 import api from '../../api/client';
 
 interface TeacherGroupItem {
@@ -10,6 +10,7 @@ interface TeacherGroupItem {
   groupName: string;
   studentCount: number | '';
   archiveCount: number | '';
+  archiveStudentNames: string;
   groupSalary: number | '';
 }
 
@@ -57,22 +58,25 @@ export const TeacherSalaryModal: React.FC<TeacherSalaryModalProps> = ({
             groupName: g.groupName,
             studentCount: g.studentCount,
             archiveCount: g.archiveCount,
+            archiveStudentNames: Array.isArray(g.archiveStudentNames)
+              ? g.archiveStudentNames.join(', ')
+              : g.archiveStudentNames || '',
             groupSalary: g.groupSalary,
           }))
         );
       } else {
-        setGroups([{ groupName: '', studentCount: '', archiveCount: '', groupSalary: '' }]);
+        setGroups([{ groupName: '', studentCount: '', archiveCount: '', archiveStudentNames: '', groupSalary: '' }]);
       }
     } catch (err) {
       console.error(err);
-      setGroups([{ groupName: '', studentCount: '', archiveCount: '', groupSalary: '' }]);
+      setGroups([{ groupName: '', studentCount: '', archiveCount: '', archiveStudentNames: '', groupSalary: '' }]);
     } finally {
       setFetching(false);
     }
   };
 
   const handleAddGroup = () => {
-    setGroups([...groups, { groupName: '', studentCount: '', archiveCount: '', groupSalary: '' }]);
+    setGroups([...groups, { groupName: '', studentCount: '', archiveCount: '', archiveStudentNames: '', groupSalary: '' }]);
   };
 
   const handleRemoveGroup = (index: number) => {
@@ -101,12 +105,19 @@ export const TeacherSalaryModal: React.FC<TeacherSalaryModalProps> = ({
         salaryRecordId,
         month,
         year,
-        groups: groups.map((g) => ({
-          groupName: g.groupName || 'Guruh',
-          studentCount: Number(g.studentCount || 0),
-          archiveCount: Number(g.archiveCount || 0),
-          groupSalary: Number(g.groupSalary || 0),
-        })),
+        groups: groups.map((g) => {
+          const namesArr = typeof g.archiveStudentNames === 'string'
+            ? g.archiveStudentNames.split(',').map((s) => s.trim()).filter(Boolean)
+            : [];
+
+          return {
+            groupName: g.groupName || 'Guruh',
+            studentCount: Number(g.studentCount || 0),
+            archiveCount: Number(g.archiveCount || 0),
+            archiveStudentNames: namesArr,
+            groupSalary: Number(g.groupSalary || 0),
+          };
+        }),
       });
       onSuccess();
       onClose();
@@ -122,7 +133,7 @@ export const TeacherSalaryModal: React.FC<TeacherSalaryModalProps> = ({
       title={`O‘qituvchi Guruhlari va Maoshi — ${teacherName}`}
       isOpen={isOpen}
       onClose={onClose}
-      maxWidthClass="max-w-4xl"
+      maxWidthClass="max-w-5xl"
     >
       <div className="space-y-5">
         <div className="flex items-center justify-between bg-[#0d0d0f] border border-zinc-800 rounded-xl p-4">
@@ -132,7 +143,7 @@ export const TeacherSalaryModal: React.FC<TeacherSalaryModalProps> = ({
             </div>
             <div>
               <p className="text-xs font-bold text-white">Oylik Davri: {getMonthName(month)} {year}</p>
-              <p className="text-[11px] text-zinc-400">Har bir guruh uchun o‘quvchi, arxiv va maosh ko‘rsatkichlarini kiriting</p>
+              <p className="text-[11px] text-zinc-400">Har bir guruh uchun o‘quvchi, arxiv o‘quvchilar ismlari va maosh ko‘rsatkichlarini kiriting</p>
             </div>
           </div>
           <div className="text-right">
@@ -147,88 +158,126 @@ export const TeacherSalaryModal: React.FC<TeacherSalaryModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-3 max-h-[450px] overflow-y-auto pr-1">
-              {groups.map((group, index) => (
-                <div
-                  key={index}
-                  className="bg-[#0d0d0f] border border-zinc-800 rounded-2xl p-4 space-y-3 relative hover:border-zinc-700 transition-colors"
-                >
-                  <div className="flex items-center justify-between pb-2 border-b border-zinc-800/80">
-                    <span className="text-xs font-extrabold text-orange-400 uppercase tracking-wider">
-                      Guruh #{index + 1}
-                    </span>
-                    {groups.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveGroup(index)}
-                        className="text-zinc-500 hover:text-rose-400 transition-colors p-1 rounded-lg hover:bg-rose-500/10"
-                        title="Guruhni o‘chirish"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
+            <div className="space-y-4 max-h-[480px] overflow-y-auto pr-1">
+              {groups.map((group, index) => {
+                const namesList = typeof group.archiveStudentNames === 'string'
+                  ? group.archiveStudentNames.split(',').map((s) => s.trim()).filter(Boolean)
+                  : [];
 
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-                        Guruh Nomi *
+                return (
+                  <div
+                    key={index}
+                    className="bg-[#0d0d0f] border border-zinc-800 rounded-2xl p-4 space-y-3 relative hover:border-zinc-700 transition-colors"
+                  >
+                    <div className="flex items-center justify-between pb-2 border-b border-zinc-800/80">
+                      <span className="text-xs font-extrabold text-orange-400 uppercase tracking-wider">
+                        Guruh #{index + 1}
+                      </span>
+                      {groups.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveGroup(index)}
+                          className="text-zinc-500 hover:text-rose-400 transition-colors p-1 rounded-lg hover:bg-rose-500/10"
+                          title="Guruhni o‘chirish"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                          Guruh Nomi *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Masalan: Front-end 12"
+                          className="w-full bg-[#141417] border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-orange-500"
+                          value={group.groupName}
+                          onChange={(e) => handleGroupChange(index, 'groupName', e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                          O‘quvchilar Soni
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="15"
+                          className="w-full bg-[#141417] border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-orange-500"
+                          value={group.studentCount}
+                          onChange={(e) => handleGroupChange(index, 'studentCount', e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                          Arxivlar Soni
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="2"
+                          className="w-full bg-[#141417] border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-orange-500"
+                          value={group.archiveCount}
+                          onChange={(e) => handleGroupChange(index, 'archiveCount', e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-amber-400 mb-1.5">
+                          Guruh Maoshi (UZS) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          required
+                          placeholder="1 500 000"
+                          className="w-full bg-[#141417] border border-amber-500/30 rounded-xl px-3 py-2 text-xs font-extrabold text-amber-400 focus:outline-none focus:border-amber-500"
+                          value={group.groupSalary}
+                          onChange={(e) => handleGroupChange(index, 'groupSalary', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* NEW ROW: Archive Student Names */}
+                    <div className="pt-2 border-t border-zinc-800/60 space-y-2">
+                      <label className="block text-xs font-semibold text-zinc-400">
+                        Arxiv O‘quvchilar Ismlari (Vergul bilan ajratib kiriting)
                       </label>
                       <input
                         type="text"
-                        required
-                        placeholder="Masalan: Front-end 12"
-                        className="w-full bg-[#141417] border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-orange-500"
-                        value={group.groupName}
-                        onChange={(e) => handleGroupChange(index, 'groupName', e.target.value)}
+                        placeholder="Masalan: Ali Valiyev, Bobur Karimov, Jamshid Tursunov"
+                        className="w-full bg-[#141417] border border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-semibold text-zinc-200 focus:outline-none focus:border-orange-500"
+                        value={group.archiveStudentNames}
+                        onChange={(e) => handleGroupChange(index, 'archiveStudentNames', e.target.value)}
                       />
-                    </div>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-                        O‘quvchilar Soni
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="15"
-                        className="w-full bg-[#141417] border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-orange-500"
-                        value={group.studentCount}
-                        onChange={(e) => handleGroupChange(index, 'studentCount', e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-                        Arxivlar Soni
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="2"
-                        className="w-full bg-[#141417] border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-orange-500"
-                        value={group.archiveCount}
-                        onChange={(e) => handleGroupChange(index, 'archiveCount', e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-amber-400 mb-1.5">
-                        Guruh Maoshi (UZS) *
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        required
-                        placeholder="1 500 000"
-                        className="w-full bg-[#141417] border border-amber-500/30 rounded-xl px-3 py-2 text-xs font-extrabold text-amber-400 focus:outline-none focus:border-amber-500"
-                        value={group.groupSalary}
-                        onChange={(e) => handleGroupChange(index, 'groupSalary', e.target.value)}
-                      />
+                      {/* Display extracted student tags */}
+                      {namesList.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          <span className="text-[11px] font-bold text-zinc-500 mr-1 flex items-center gap-1">
+                            <UserCheck size={13} className="text-orange-400" />
+                            Arxivdagi o‘quvchilar ({namesList.length} ta):
+                          </span>
+                          {namesList.map((name, i) => (
+                            <span
+                              key={i}
+                              className="bg-orange-500/10 text-orange-400 border border-orange-500/20 text-[11px] font-bold px-2 py-0.5 rounded-full"
+                            >
+                              {name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex items-center justify-between pt-4 border-t border-zinc-800">

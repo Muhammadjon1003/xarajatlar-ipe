@@ -140,16 +140,17 @@ model MonthlySalary {
 
 // Teacher group salary breakdown per month
 model TeacherGroupSalary {
-  id           String   @id @default(uuid())
-  month        Int
-  year         Int
-  groupName    String
-  studentCount Int      @default(0)
-  archiveCount Int      @default(0)
-  groupSalary  Decimal  @db.Decimal(12, 2)
-  teacherId    String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  month               Int
+  year                Int
+  groupName           String
+  studentCount        Int      @default(0)
+  archiveCount        Int      @default(0)
+  archiveStudentNames String[] @default([])
+  groupSalary         Decimal  @db.Decimal(12, 2)
+  teacherId           String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
   teacher      Employee @relation("TeacherGroups", fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([teacherId, month, year])

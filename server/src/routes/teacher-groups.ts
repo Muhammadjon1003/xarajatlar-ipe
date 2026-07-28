@@ -44,15 +44,24 @@ router.post(
       });
 
       const created = await prisma.teacherGroupSalary.createMany({
-        data: groups.map((g: any) => ({
-          teacherId,
-          month: Number(month),
-          year: Number(year),
-          groupName: g.groupName,
-          studentCount: Number(g.studentCount || 0),
-          archiveCount: Number(g.archiveCount || 0),
-          groupSalary: Number(g.groupSalary || 0),
-        })),
+        data: groups.map((g: any) => {
+          const namesArray = Array.isArray(g.archiveStudentNames)
+            ? g.archiveStudentNames.map((s: any) => String(s).trim()).filter(Boolean)
+            : typeof g.archiveStudentNames === 'string'
+            ? g.archiveStudentNames.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : [];
+
+          return {
+            teacherId,
+            month: Number(month),
+            year: Number(year),
+            groupName: g.groupName,
+            studentCount: Number(g.studentCount || 0),
+            archiveCount: Number(g.archiveCount || 0),
+            archiveStudentNames: namesArray,
+            groupSalary: Number(g.groupSalary || 0),
+          };
+        }),
       });
 
       const totalSalary = groups.reduce((sum: number, g: any) => sum + Number(g.groupSalary || 0), 0);
