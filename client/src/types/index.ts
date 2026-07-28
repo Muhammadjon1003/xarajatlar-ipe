@@ -106,7 +106,7 @@ export interface MonthlySalary {
     firstName: string;
     lastName: string;
     phone?: string | null;
-    role?: { displayName: string };
+    role?: { displayName: string; code?: string };
   };
   createdAt: string;
 }

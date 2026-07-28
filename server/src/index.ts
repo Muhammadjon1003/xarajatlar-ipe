@@ -11,6 +11,8 @@ import advanceRoutes from './routes/advances';
 import shiftRoutes from './routes/shifts';
 import salaryRoutes from './routes/salaries';
 import analyticsRoutes from './routes/analytics';
+import teacherGroupsRoutes from './routes/teacher-groups';
+import adminProbniyRoutes from './routes/admin-probniy';
 
 dotenv.config();
 
@@ -30,6 +32,8 @@ app.use('/api/advances', advanceRoutes);
 app.use('/api/shifts', shiftRoutes);
 app.use('/api/salaries', salaryRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/teacher-groups', teacherGroupsRoutes);
+app.use('/api/admin-probniy', adminProbniyRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

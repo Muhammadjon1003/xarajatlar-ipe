@@ -82,6 +82,7 @@ export const SalariesPage: React.FC = () => {
         onCalculate={handleCalculatePayroll}
         onTogglePaid={togglePaidStatus}
         onUpdateBaseSalary={handleUpdateBaseSalary}
+        onRefresh={fetchSalaries}
       />
     </div>
   );

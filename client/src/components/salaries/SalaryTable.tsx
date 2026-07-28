@@ -11,6 +11,7 @@ interface SalaryTableProps {
   onCalculate: () => void;
   onTogglePaid: (id: string, isPaid: boolean) => void;
   onUpdateBaseSalary: (id: string, newBaseSalary: number) => Promise<void>;
+  onRefresh: () => void;
 }
 
 export const SalaryTable: React.FC<SalaryTableProps> = ({
@@ -19,6 +20,7 @@ export const SalaryTable: React.FC<SalaryTableProps> = ({
   onCalculate,
   onTogglePaid,
   onUpdateBaseSalary,
+  onRefresh,
 }) => {
   if (loading) {
     return <p className="text-zinc-400 p-4">Yuklanmoqda...</p>;
@@ -54,6 +56,7 @@ export const SalaryTable: React.FC<SalaryTableProps> = ({
           salary={sal}
           onTogglePaid={onTogglePaid}
           onUpdateBaseSalary={onUpdateBaseSalary}
+          onRefresh={onRefresh}
         />
       ))}
     </TableWrapper>
