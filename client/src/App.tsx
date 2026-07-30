@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { Sidebar } from './components/Sidebar';
@@ -16,7 +17,6 @@ import { SettingsPage } from './pages/SettingsPage';
 
 export const App: React.FC = () => {
   const { user, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState('expenses-input');
 
   if (isLoading) {
     return (
@@ -27,45 +27,35 @@ export const App: React.FC = () => {
   }
 
   if (!user) {
-    return <LoginPage />;
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
   }
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <DashboardPage />;
-      case 'expenses-input':
-        return <ExpensesInputPage />;
-      case 'expenses-stats':
-        return <ExpensesStatsPage />;
-      case 'expenses-ledger':
-        return <ExpensesLedgerPage />;
-      case 'monthly-analysis':
-        return <MonthlyAnalysisPage />;
-      case 'salaries':
-        return <SalariesPage />;
-      case 'salary-payout':
-        return <SalaryPayoutPage />;
-      case 'employees':
-        return <EmployeesPage />;
-      case 'advances':
-        return <AdvancesPage />;
-      case 'shifts':
-        return <ShiftsPage />;
-      case 'settings':
-      case 'branches-categories':
-      case 'price-settings':
-        return <SettingsPage />;
-      default:
-        return <ExpensesInputPage />;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#09090b] flex text-zinc-100">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar />
       <main className="flex-1 ml-64 p-8 min-h-screen max-w-[calc(100vw-16rem)] overflow-x-hidden">
-        {renderContent()}
+        <Routes>
+          <Route path="/" element={<Navigate to="/expenses-input" replace />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/expenses-input" element={<ExpensesInputPage />} />
+          <Route path="/expenses-stats" element={<ExpensesStatsPage />} />
+          <Route path="/expenses-ledger" element={<ExpensesLedgerPage />} />
+          <Route path="/monthly-analysis" element={<MonthlyAnalysisPage />} />
+          <Route path="/salaries" element={<SalariesPage />} />
+          <Route path="/salary-payout" element={<SalaryPayoutPage />} />
+          <Route path="/employees" element={<EmployeesPage />} />
+          <Route path="/advances" element={<AdvancesPage />} />
+          <Route path="/shifts" element={<ShiftsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/branches-categories" element={<Navigate to="/settings" replace />} />
+          <Route path="/price-settings" element={<Navigate to="/settings" replace />} />
+          <Route path="*" element={<Navigate to="/expenses-input" replace />} />
+        </Routes>
       </main>
     </div>
   );

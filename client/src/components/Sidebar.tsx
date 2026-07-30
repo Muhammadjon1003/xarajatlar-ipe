@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   PlusCircle,
@@ -16,26 +17,22 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-interface SidebarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-}
-
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+export const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   const navItems = [
-    { id: 'dashboard', label: 'Boshqaruv Paneli', icon: LayoutDashboard },
-    { id: 'expenses-input', label: 'Xarajat Kiritish', icon: PlusCircle },
-    { id: 'expenses-stats', label: 'Xarajat Tahlili & Stats', icon: BarChart3 },
-    { id: 'expenses-ledger', label: 'Xarajat Daftari (Ledger)', icon: BookOpen },
-    { id: 'monthly-analysis', label: 'Oylik Tahlil', icon: LineChart },
-    { id: 'salaries', label: 'Oyliklarni Hisoblash', icon: Banknote },
-    { id: 'salary-payout', label: 'Oyliklarni Berish', icon: DollarSign },
-    { id: 'employees', label: 'Xodimlar va Rollar', icon: Users },
-    { id: 'advances', label: 'Oylik Avanslar', icon: Clock },
-    { id: 'shifts', label: 'Zamena', icon: ArrowRightLeft },
-    { id: 'settings', label: 'Tizim Sozlamalari', icon: Settings },
+    { path: '/dashboard', label: 'Boshqaruv Paneli', icon: LayoutDashboard },
+    { path: '/expenses-input', label: 'Xarajat Kiritish', icon: PlusCircle },
+    { path: '/expenses-stats', label: 'Xarajat Tahlili & Stats', icon: BarChart3 },
+    { path: '/expenses-ledger', label: 'Xarajat Daftari (Ledger)', icon: BookOpen },
+    { path: '/monthly-analysis', label: 'Oylik Tahlil', icon: LineChart },
+    { path: '/salaries', label: 'Oyliklarni Hisoblash', icon: Banknote },
+    { path: '/salary-payout', label: 'Oyliklarni Berish', icon: DollarSign },
+    { path: '/employees', label: 'Xodimlar va Rollar', icon: Users },
+    { path: '/advances', label: 'Oylik Avanslar', icon: Clock },
+    { path: '/shifts', label: 'Zamena', icon: ArrowRightLeft },
+    { path: '/settings', label: 'Tizim Sozlamalari', icon: Settings },
   ];
 
   return (
@@ -57,11 +54,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
+          const isActive = location.pathname === item.path || (location.pathname === '/' && item.path === '/expenses-input');
           return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
+            <Link
+              key={item.path}
+              to={item.path}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 isActive
                   ? 'bg-orange-500/15 text-orange-400 border-l-4 border-orange-500 font-bold'
@@ -70,7 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
             >
               <Icon size={18} className={isActive ? 'text-orange-400' : 'text-zinc-400'} />
               <span className="truncate">{item.label}</span>
-            </button>
+            </Link>
           );
         })}
       </nav>
