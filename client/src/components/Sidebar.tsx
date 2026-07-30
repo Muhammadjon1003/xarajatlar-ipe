@@ -26,7 +26,7 @@ export const Sidebar: React.FC = () => {
 
   const allNavItems = [
     { path: '/admin-panel', label: 'Admin Panel', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'DIRECTOR'] },
-    { path: '/my-salary', label: 'Mening Oyligim', icon: UserCheck, roles: ['TEACHER', 'ADMINISTRATOR', 'EMPLOYEE'] },
+    { path: '/my-salary', label: 'Mening Oyligim', icon: UserCheck, roles: ['TEACHER', 'ADMINISTRATOR', 'EMPLOYEE', 'MANAGER'] },
     { path: '/dashboard', label: 'Boshqaruv Paneli', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER'] },
     { path: '/expenses-input', label: 'Xarajat Kiritish', icon: PlusCircle, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'EXPENSE_CLERK'] },
     { path: '/expenses-stats', label: 'Xarajat Tahlili & Stats', icon: BarChart3, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER'] },
