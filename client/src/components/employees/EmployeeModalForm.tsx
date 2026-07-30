@@ -3,6 +3,7 @@ import { Employee, Role } from '../../types';
 import { ModalWrapper } from '../common/ModalWrapper';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
+import { useAuth } from '../../context/AuthContext';
 
 interface EmployeeModalFormProps {
   isOpen: boolean;
@@ -19,6 +20,14 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.roleCode === 'SUPER_ADMIN';
+
+  // Filter roles: non-superadmin cannot see or select SUPER_ADMIN role
+  const availableRoles = isSuperAdmin
+    ? roles
+    : roles.filter((r) => r.code !== 'SUPER_ADMIN');
+
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
@@ -41,7 +50,7 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
       setUsername('');
       setPassword('');
       setIsActive(true);
-      if (roles.length > 0) setRoleId(roles[0].id);
+      if (availableRoles.length > 0) setRoleId(availableRoles[0].id);
     }
   }, [editingEmployee, isOpen, roles]);
 
@@ -118,7 +127,7 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
             onChange={(e) => setRoleId(e.target.value)}
             required
           >
-            {roles.map((r) => (
+            {availableRoles.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.displayName}
               </option>

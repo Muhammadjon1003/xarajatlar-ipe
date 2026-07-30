@@ -7,9 +7,20 @@ const router = Router();
 router.use(authenticateJWT);
 
 // GET /api/employees
-router.get('/', async (_req: AuthRequest, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
+    const isSuperAdmin = req.user?.roleCode === 'SUPER_ADMIN';
+
+    const whereClause: any = {};
+    if (!isSuperAdmin) {
+      // Hide SUPER_ADMIN (Direktor) accounts from Manager & other roles
+      whereClause.role = {
+        code: { not: 'SUPER_ADMIN' },
+      };
+    }
+
     const employees = await prisma.employee.findMany({
+      where: whereClause,
       select: {
         id: true,
         firstName: true,
@@ -47,6 +58,12 @@ router.post(
 
       if (!firstName || !lastName || !roleId) {
         return res.status(400).json({ error: 'Ism, familiya va rol kiritilishi shart' });
+      }
+
+      // Non-superadmin cannot assign SUPER_ADMIN role
+      const targetRole = await prisma.role.findUnique({ where: { id: roleId } });
+      if (targetRole?.code === 'SUPER_ADMIN' && req.user?.roleCode !== 'SUPER_ADMIN') {
+        return res.status(403).json({ error: 'Faqat Direktorgina Direktor lavozimini tayinlashi mumkin' });
       }
 
       if (loginInput) {
@@ -106,6 +123,27 @@ router.put(
       const { id } = req.params;
       const { firstName, lastName, username, phone, password, roleId, defaultBaseSalary, isActive } = req.body;
       const loginInput = String(username || phone || '').trim();
+
+      const existingEmp = await prisma.employee.findUnique({
+        where: { id },
+        include: { role: true },
+      });
+
+      if (!existingEmp) {
+        return res.status(404).json({ error: 'Xodim topilmadi' });
+      }
+
+      // Non-superadmin cannot edit a SUPER_ADMIN account
+      if (existingEmp.role.code === 'SUPER_ADMIN' && req.user?.roleCode !== 'SUPER_ADMIN') {
+        return res.status(403).json({ error: 'Faqat Direktorgina Direktor profilini tahrirlashi mumkin' });
+      }
+
+      if (roleId) {
+        const targetRole = await prisma.role.findUnique({ where: { id: roleId } });
+        if (targetRole?.code === 'SUPER_ADMIN' && req.user?.roleCode !== 'SUPER_ADMIN') {
+          return res.status(403).json({ error: 'Faqat Direktorgina Direktor lavozimini tayinlashi mumkin' });
+        }
+      }
 
       const dataToUpdate: any = {
         firstName: firstName?.trim(),

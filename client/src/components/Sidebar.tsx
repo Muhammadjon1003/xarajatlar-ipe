@@ -15,6 +15,7 @@ import {
   Settings,
   LogOut,
   UserCheck,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -23,9 +24,8 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
   const roleCode = user?.roleCode || '';
 
-  const isSuperAdminOrManager = roleCode === 'SUPER_ADMIN' || roleCode === 'MANAGER';
-
   const allNavItems = [
+    { path: '/admin-panel', label: 'Admin Panel', icon: ShieldCheck, roles: ['SUPER_ADMIN'] },
     { path: '/my-salary', label: 'Mening Oyligim', icon: UserCheck, roles: ['TEACHER', 'ADMINISTRATOR', 'EMPLOYEE'] },
     { path: '/dashboard', label: 'Boshqaruv Paneli', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'MANAGER'] },
     { path: '/expenses-input', label: 'Xarajat Kiritish', icon: PlusCircle, roles: ['SUPER_ADMIN', 'MANAGER', 'EXPENSE_CLERK'] },
@@ -41,9 +41,7 @@ export const Sidebar: React.FC = () => {
   ];
 
   // Filter items based on user role
-  const navItems = isSuperAdminOrManager
-    ? allNavItems
-    : allNavItems.filter((item) => item.roles.includes(roleCode));
+  const navItems = allNavItems.filter((item) => item.roles.includes(roleCode));
 
   return (
     <aside className="w-64 h-screen fixed left-0 top-0 bg-[#121215] border-r border-zinc-800/60 flex flex-col p-5 z-40">

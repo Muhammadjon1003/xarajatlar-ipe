@@ -15,6 +15,7 @@ import { ShiftsPage } from './pages/ShiftsPage';
 import { MonthlyAnalysisPage } from './pages/MonthlyAnalysisPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { MySalaryPage } from './pages/MySalaryPage';
+import { AdminPanelPage } from './pages/AdminPanelPage';
 
 export const App: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -63,6 +64,7 @@ export const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Navigate to={defaultPath} replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/admin-panel" element={<AdminPanelPage />} />
           <Route path="/my-salary" element={<MySalaryPage />} />
           <Route path="/expenses-input" element={<ExpensesInputPage />} />
           <Route path="/expenses-stats" element={<ExpensesStatsPage />} />
