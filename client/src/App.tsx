@@ -49,6 +49,7 @@ export const App: React.FC = () => {
       case 'EXPENSE_CLERK':
         return '/expenses-input';
       case 'SUPER_ADMIN':
+      case 'DIRECTOR':
       case 'MANAGER':
       default:
         return '/dashboard';

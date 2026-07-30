@@ -8,7 +8,8 @@ async function main() {
 
   // 1. Seed Roles
   const rolesData = [
-    { code: 'SUPER_ADMIN', displayName: 'Direktor' },
+    { code: 'SUPER_ADMIN', displayName: 'Super Admin' },
+    { code: 'DIRECTOR', displayName: 'Direktor' },
     { code: 'MANAGER', displayName: 'Menejer' },
     { code: 'ADMINISTRATOR', displayName: 'Administrator' },
     { code: 'TEACHER', displayName: 'O\'qituvchi' },

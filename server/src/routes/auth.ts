@@ -7,7 +7,8 @@ import { authenticateJWT, AuthRequest } from '../middleware/auth';
 const router = Router();
 
 const DEFAULT_ROLES = [
-  { code: 'SUPER_ADMIN', displayName: 'Direktor' },
+  { code: 'SUPER_ADMIN', displayName: 'Super Admin' },
+  { code: 'DIRECTOR', displayName: 'Direktor' },
   { code: 'MANAGER', displayName: 'Menejer' },
   { code: 'ADMINISTRATOR', displayName: 'Administrator' },
   { code: 'TEACHER', displayName: 'O‘qituvchi' },
@@ -146,7 +147,7 @@ router.get('/me', authenticateJWT, async (req: AuthRequest, res: Response) => {
   return res.json({ user: req.user });
 });
 
-// GET /api/auth/roles (Auto-ensures all 7 standard roles exist)
+// GET /api/auth/roles (Auto-ensures all standard roles exist)
 router.get('/roles', authenticateJWT, async (_req: AuthRequest, res: Response) => {
   try {
     await ensureSuperAdmin();

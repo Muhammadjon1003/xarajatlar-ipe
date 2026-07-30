@@ -25,19 +25,19 @@ export const Sidebar: React.FC = () => {
   const roleCode = user?.roleCode || '';
 
   const allNavItems = [
-    { path: '/admin-panel', label: 'Admin Panel', icon: ShieldCheck, roles: ['SUPER_ADMIN'] },
+    { path: '/admin-panel', label: 'Admin Panel', icon: ShieldCheck, roles: ['SUPER_ADMIN', 'DIRECTOR'] },
     { path: '/my-salary', label: 'Mening Oyligim', icon: UserCheck, roles: ['TEACHER', 'ADMINISTRATOR', 'EMPLOYEE'] },
-    { path: '/dashboard', label: 'Boshqaruv Paneli', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'MANAGER'] },
-    { path: '/expenses-input', label: 'Xarajat Kiritish', icon: PlusCircle, roles: ['SUPER_ADMIN', 'MANAGER', 'EXPENSE_CLERK'] },
-    { path: '/expenses-stats', label: 'Xarajat Tahlili & Stats', icon: BarChart3, roles: ['SUPER_ADMIN', 'MANAGER'] },
-    { path: '/expenses-ledger', label: 'Xarajat Daftari (Ledger)', icon: BookOpen, roles: ['SUPER_ADMIN', 'MANAGER'] },
-    { path: '/monthly-analysis', label: 'Oylik Tahlil', icon: LineChart, roles: ['SUPER_ADMIN', 'MANAGER'] },
-    { path: '/salaries', label: 'Oyliklarni Hisoblash', icon: Banknote, roles: ['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT'] },
-    { path: '/salary-payout', label: 'Oyliklarni Berish', icon: DollarSign, roles: ['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT'] },
-    { path: '/employees', label: 'Xodimlar va Rollar', icon: Users, roles: ['SUPER_ADMIN', 'MANAGER'] },
-    { path: '/advances', label: 'Oylik Avanslar', icon: Clock, roles: ['SUPER_ADMIN', 'MANAGER', 'EXPENSE_CLERK', 'PAYROLL_ACCOUNTANT', 'EMPLOYEE'] },
-    { path: '/shifts', label: 'Zamena', icon: ArrowRightLeft, roles: ['SUPER_ADMIN', 'MANAGER', 'TEACHER', 'EMPLOYEE'] },
-    { path: '/settings', label: 'Tizim Sozlamalari', icon: Settings, roles: ['SUPER_ADMIN', 'MANAGER'] },
+    { path: '/dashboard', label: 'Boshqaruv Paneli', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER'] },
+    { path: '/expenses-input', label: 'Xarajat Kiritish', icon: PlusCircle, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'EXPENSE_CLERK'] },
+    { path: '/expenses-stats', label: 'Xarajat Tahlili & Stats', icon: BarChart3, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER'] },
+    { path: '/expenses-ledger', label: 'Xarajat Daftari (Ledger)', icon: BookOpen, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER'] },
+    { path: '/monthly-analysis', label: 'Oylik Tahlil', icon: LineChart, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER'] },
+    { path: '/salaries', label: 'Oyliklarni Hisoblash', icon: Banknote, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'PAYROLL_ACCOUNTANT'] },
+    { path: '/salary-payout', label: 'Oyliklarni Berish', icon: DollarSign, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'PAYROLL_ACCOUNTANT'] },
+    { path: '/employees', label: 'Xodimlar va Rollar', icon: Users, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER'] },
+    { path: '/advances', label: 'Oylik Avanslar', icon: Clock, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'EXPENSE_CLERK', 'PAYROLL_ACCOUNTANT', 'EMPLOYEE'] },
+    { path: '/shifts', label: 'Zamena', icon: ArrowRightLeft, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER', 'TEACHER', 'EMPLOYEE'] },
+    { path: '/settings', label: 'Tizim Sozlamalari', icon: Settings, roles: ['SUPER_ADMIN', 'DIRECTOR', 'MANAGER'] },
   ];
 
   // Filter items based on user role
