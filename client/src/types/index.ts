@@ -9,8 +9,10 @@ export interface User {
   firstName: string;
   lastName: string;
   phone: string | null;
+  username?: string | null;
   roleCode: string;
   roleDisplayName: string;
+  defaultBaseSalary?: number | null;
 }
 
 export interface Branch {

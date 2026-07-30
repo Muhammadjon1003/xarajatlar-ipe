@@ -14,6 +14,7 @@ import { AdvancesPage } from './pages/AdvancesPage';
 import { ShiftsPage } from './pages/ShiftsPage';
 import { MonthlyAnalysisPage } from './pages/MonthlyAnalysisPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { MySalaryPage } from './pages/MySalaryPage';
 
 export const App: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -35,12 +36,31 @@ export const App: React.FC = () => {
     );
   }
 
+  // Smart default route based on user role
+  const getDefaultRoute = () => {
+    switch (user.roleCode) {
+      case 'EXPENSE_CLERK':
+        return '/expenses-input';
+      case 'PAYROLL_ACCOUNTANT':
+        return '/salaries';
+      case 'TEACHER':
+      case 'ADMINISTRATOR':
+      case 'EMPLOYEE':
+        return '/my-salary';
+      default:
+        return '/dashboard';
+    }
+  };
+
+  const defaultPath = getDefaultRoute();
+
   return (
     <div className="min-h-screen bg-[#09090b] flex text-zinc-100">
       <Sidebar />
       <main className="flex-1 ml-64 p-8 min-h-screen max-w-[calc(100vw-16rem)] overflow-x-hidden">
         <Routes>
-          <Route path="/" element={<Navigate to="/expenses-input" replace />} />
+          <Route path="/" element={<Navigate to={defaultPath} replace />} />
+          <Route path="/my-salary" element={<MySalaryPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/expenses-input" element={<ExpensesInputPage />} />
           <Route path="/expenses-stats" element={<ExpensesStatsPage />} />
@@ -54,7 +74,7 @@ export const App: React.FC = () => {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/branches-categories" element={<Navigate to="/settings" replace />} />
           <Route path="/price-settings" element={<Navigate to="/settings" replace />} />
-          <Route path="*" element={<Navigate to="/expenses-input" replace />} />
+          <Route path="*" element={<Navigate to={defaultPath} replace />} />
         </Routes>
       </main>
     </div>

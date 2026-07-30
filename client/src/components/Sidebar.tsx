@@ -14,26 +14,36 @@ import {
   LineChart,
   Settings,
   LogOut,
+  UserCheck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const roleCode = user?.roleCode || '';
 
-  const navItems = [
-    { path: '/dashboard', label: 'Boshqaruv Paneli', icon: LayoutDashboard },
-    { path: '/expenses-input', label: 'Xarajat Kiritish', icon: PlusCircle },
-    { path: '/expenses-stats', label: 'Xarajat Tahlili & Stats', icon: BarChart3 },
-    { path: '/expenses-ledger', label: 'Xarajat Daftari (Ledger)', icon: BookOpen },
-    { path: '/monthly-analysis', label: 'Oylik Tahlil', icon: LineChart },
-    { path: '/salaries', label: 'Oyliklarni Hisoblash', icon: Banknote },
-    { path: '/salary-payout', label: 'Oyliklarni Berish', icon: DollarSign },
-    { path: '/employees', label: 'Xodimlar va Rollar', icon: Users },
-    { path: '/advances', label: 'Oylik Avanslar', icon: Clock },
-    { path: '/shifts', label: 'Zamena', icon: ArrowRightLeft },
-    { path: '/settings', label: 'Tizim Sozlamalari', icon: Settings },
+  const isSuperAdminOrManager = roleCode === 'SUPER_ADMIN' || roleCode === 'MANAGER';
+
+  const allNavItems = [
+    { path: '/my-salary', label: 'Mening Oyligim', icon: UserCheck, roles: ['TEACHER', 'ADMINISTRATOR', 'EMPLOYEE'] },
+    { path: '/dashboard', label: 'Boshqaruv Paneli', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'MANAGER'] },
+    { path: '/expenses-input', label: 'Xarajat Kiritish', icon: PlusCircle, roles: ['SUPER_ADMIN', 'MANAGER', 'EXPENSE_CLERK'] },
+    { path: '/expenses-stats', label: 'Xarajat Tahlili & Stats', icon: BarChart3, roles: ['SUPER_ADMIN', 'MANAGER'] },
+    { path: '/expenses-ledger', label: 'Xarajat Daftari (Ledger)', icon: BookOpen, roles: ['SUPER_ADMIN', 'MANAGER'] },
+    { path: '/monthly-analysis', label: 'Oylik Tahlil', icon: LineChart, roles: ['SUPER_ADMIN', 'MANAGER'] },
+    { path: '/salaries', label: 'Oyliklarni Hisoblash', icon: Banknote, roles: ['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT'] },
+    { path: '/salary-payout', label: 'Oyliklarni Berish', icon: DollarSign, roles: ['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT'] },
+    { path: '/employees', label: 'Xodimlar va Rollar', icon: Users, roles: ['SUPER_ADMIN', 'MANAGER'] },
+    { path: '/advances', label: 'Oylik Avanslar', icon: Clock, roles: ['SUPER_ADMIN', 'MANAGER', 'EXPENSE_CLERK', 'PAYROLL_ACCOUNTANT', 'EMPLOYEE'] },
+    { path: '/shifts', label: 'Zamena', icon: ArrowRightLeft, roles: ['SUPER_ADMIN', 'MANAGER', 'TEACHER', 'ADMINISTRATOR', 'EMPLOYEE'] },
+    { path: '/settings', label: 'Tizim Sozlamalari', icon: Settings, roles: ['SUPER_ADMIN', 'MANAGER'] },
   ];
+
+  // Filter items based on user role
+  const navItems = isSuperAdminOrManager
+    ? allNavItems
+    : allNavItems.filter((item) => item.roles.includes(roleCode));
 
   return (
     <aside className="w-64 h-screen fixed left-0 top-0 bg-[#121215] border-r border-zinc-800/60 flex flex-col p-5 z-40">
@@ -54,7 +64,7 @@ export const Sidebar: React.FC = () => {
       <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path || (location.pathname === '/' && item.path === '/expenses-input');
+          const isActive = location.pathname === item.path;
           return (
             <Link
               key={item.path}
