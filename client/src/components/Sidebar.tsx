@@ -36,7 +36,7 @@ export const Sidebar: React.FC = () => {
     { path: '/salary-payout', label: 'Oyliklarni Berish', icon: DollarSign, roles: ['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT'] },
     { path: '/employees', label: 'Xodimlar va Rollar', icon: Users, roles: ['SUPER_ADMIN', 'MANAGER'] },
     { path: '/advances', label: 'Oylik Avanslar', icon: Clock, roles: ['SUPER_ADMIN', 'MANAGER', 'EXPENSE_CLERK', 'PAYROLL_ACCOUNTANT', 'EMPLOYEE'] },
-    { path: '/shifts', label: 'Zamena', icon: ArrowRightLeft, roles: ['SUPER_ADMIN', 'MANAGER', 'TEACHER', 'ADMINISTRATOR', 'EMPLOYEE'] },
+    { path: '/shifts', label: 'Zamena', icon: ArrowRightLeft, roles: ['SUPER_ADMIN', 'MANAGER', 'TEACHER', 'EMPLOYEE'] },
     { path: '/settings', label: 'Tizim Sozlamalari', icon: Settings, roles: ['SUPER_ADMIN', 'MANAGER'] },
   ];
 
