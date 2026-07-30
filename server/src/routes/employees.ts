@@ -4,7 +4,6 @@ import { prisma } from '../lib/prisma';
 import { authenticateJWT, AuthRequest, authorizeRoles } from '../middleware/auth';
 
 const router = Router();
-
 router.use(authenticateJWT);
 
 // GET /api/employees
@@ -15,6 +14,7 @@ router.get('/', async (_req: AuthRequest, res: Response) => {
         id: true,
         firstName: true,
         lastName: true,
+        username: true,
         phone: true,
         isActive: true,
         defaultBaseSalary: true,
@@ -42,26 +42,35 @@ router.post(
   authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
   async (req: AuthRequest, res: Response) => {
     try {
-      const { firstName, lastName, phone, password, roleId, defaultBaseSalary } = req.body;
+      const { firstName, lastName, username, phone, password, roleId, defaultBaseSalary } = req.body;
+      const loginInput = String(username || phone || '').trim();
 
       if (!firstName || !lastName || !roleId) {
         return res.status(400).json({ error: 'Ism, familiya va rol kiritilishi shart' });
       }
 
-      if (phone) {
-        const existing = await prisma.employee.findUnique({ where: { phone: phone.trim() } });
+      if (loginInput) {
+        const existing = await prisma.employee.findFirst({
+          where: {
+            OR: [
+              { username: loginInput },
+              { phone: loginInput },
+            ],
+          },
+        });
         if (existing) {
-          return res.status(400).json({ error: 'Ushbu telefon raqamli xodim allaqachon mavjud' });
+          return res.status(400).json({ error: 'Ushbu login yoki telefon raqamli xodim allaqachon mavjud' });
         }
       }
 
-      const passwordHash = password ? await bcrypt.hash(password, 10) : null;
+      const passwordHash = password ? await bcrypt.hash(password, 10) : await bcrypt.hash('123456', 10);
 
       const employee = await prisma.employee.create({
         data: {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          phone: phone ? phone.trim() : null,
+          username: loginInput || null,
+          phone: phone ? phone.trim() : loginInput || null,
           passwordHash,
           roleId,
           defaultBaseSalary: defaultBaseSalary !== undefined ? Number(defaultBaseSalary) : null,
@@ -71,6 +80,7 @@ router.post(
           id: true,
           firstName: true,
           lastName: true,
+          username: true,
           phone: true,
           isActive: true,
           defaultBaseSalary: true,
@@ -94,7 +104,8 @@ router.put(
   async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { firstName, lastName, phone, password, roleId, defaultBaseSalary, isActive } = req.body;
+      const { firstName, lastName, username, phone, password, roleId, defaultBaseSalary, isActive } = req.body;
+      const loginInput = String(username || phone || '').trim();
 
       const dataToUpdate: any = {
         firstName: firstName?.trim(),
@@ -104,8 +115,9 @@ router.put(
         isActive: isActive !== undefined ? Boolean(isActive) : undefined,
       };
 
-      if (phone !== undefined) {
-        dataToUpdate.phone = phone ? phone.trim() : null;
+      if (loginInput) {
+        dataToUpdate.username = loginInput;
+        dataToUpdate.phone = phone ? phone.trim() : loginInput;
       }
 
       if (password) {
@@ -119,6 +131,7 @@ router.put(
           id: true,
           firstName: true,
           lastName: true,
+          username: true,
           phone: true,
           isActive: true,
           defaultBaseSalary: true,

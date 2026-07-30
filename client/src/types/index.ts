@@ -54,6 +54,7 @@ export interface Employee {
   id: string;
   firstName: string;
   lastName: string;
+  username?: string | null;
   phone?: string | null;
   isActive: boolean;
   roleId?: string;

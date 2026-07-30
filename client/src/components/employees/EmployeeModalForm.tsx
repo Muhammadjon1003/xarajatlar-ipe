@@ -21,7 +21,7 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
 }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -31,14 +31,14 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
     if (editingEmployee) {
       setFirstName(editingEmployee.firstName);
       setLastName(editingEmployee.lastName);
-      setPhone(editingEmployee.phone || '');
+      setUsername(editingEmployee.username || editingEmployee.phone || '');
       setPassword('');
       setRoleId(editingEmployee.roleId || editingEmployee.role?.id || '');
       setIsActive(editingEmployee.isActive);
     } else {
       setFirstName('');
       setLastName('');
-      setPhone('');
+      setUsername('');
       setPassword('');
       setIsActive(true);
       if (roles.length > 0) setRoleId(roles[0].id);
@@ -52,7 +52,8 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
       await onSubmit({
         firstName,
         lastName,
-        phone: phone || null,
+        username: username.trim(),
+        phone: username.trim(),
         password: password || undefined,
         roleId,
         isActive,
@@ -91,17 +92,19 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <Input
-            label="Telefon Raqam"
-            placeholder="+998901234567"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            label="Login (Username) *"
+            placeholder="alivaliyev"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
           />
           <Input
-            label={`Parol ${editingEmployee ? '(O‘zgarmasa bo‘sh)' : ''}`}
+            label={`Parol ${editingEmployee ? '(O‘zgarmasa bo‘sh)' : '*'}`}
             type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required={!editingEmployee}
           />
         </div>
 

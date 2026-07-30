@@ -11,26 +11,29 @@ interface EmployeeTableRowProps {
 
 export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({ employee, onEdit }) => {
   const hasSalary = employee.defaultBaseSalary && Number(employee.defaultBaseSalary) > 0;
+  const loginDisplay = employee.username || employee.phone || '—';
 
   return (
-    <tr className="hover:bg-zinc-800/40 transition-colors">
+    <tr className="hover:bg-zinc-800/40 transition-colors border-b border-zinc-800/50">
       <td className="px-5 py-3.5 font-bold text-zinc-100">
         {employee.firstName} {employee.lastName}
       </td>
-      <td className="px-5 py-3.5 text-zinc-400">{employee.phone || '-'}</td>
+      <td className="px-5 py-3.5 font-semibold text-orange-400 text-sm">
+        {loginDisplay}
+      </td>
       <td className="px-5 py-3.5">
         <Badge status={employee.role?.displayName || 'Xodim'} />
       </td>
-      <td className="px-5 py-3.5 font-bold text-orange-400">
-        {hasSalary ? formatUZS(employee.defaultBaseSalary!) : '-'}
+      <td className="px-5 py-3.5 font-bold text-emerald-400 text-sm">
+        {hasSalary ? formatUZS(employee.defaultBaseSalary!) : '—'}
       </td>
       <td className="px-5 py-3.5">
         {employee.isActive ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <UserCheck size={12} /> Faol
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase bg-rose-500/10 text-rose-400 border border-rose-500/20">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-rose-500/10 text-rose-400 border border-rose-500/20">
             <UserX size={12} /> Nofaol
           </span>
         )}

@@ -25,7 +25,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, loading
   }
 
   return (
-    <TableWrapper headers={['Ism Familiya', 'Telefon', 'Rol / Huquq', 'Oxirgi Maoshi', 'Holat', 'Amallar']}>
+    <TableWrapper headers={['Ism Familiya', 'Login', 'Rol / Huquq', 'Oxirgi Maoshi', 'Holat', 'Amallar']}>
       {employees.map((emp) => (
         <EmployeeTableRow key={emp.id} employee={emp} onEdit={onEdit} />
       ))}
