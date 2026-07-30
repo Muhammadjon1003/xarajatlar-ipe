@@ -36,17 +36,19 @@ export const App: React.FC = () => {
     );
   }
 
-  // Smart default route based on user role
+  // Default landing route based on role
   const getDefaultRoute = () => {
     switch (user.roleCode) {
-      case 'EXPENSE_CLERK':
-        return '/expenses-input';
-      case 'PAYROLL_ACCOUNTANT':
-        return '/salaries';
       case 'TEACHER':
       case 'ADMINISTRATOR':
       case 'EMPLOYEE':
         return '/my-salary';
+      case 'PAYROLL_ACCOUNTANT':
+        return '/salaries';
+      case 'EXPENSE_CLERK':
+        return '/expenses-input';
+      case 'SUPER_ADMIN':
+      case 'MANAGER':
       default:
         return '/dashboard';
     }
@@ -60,8 +62,8 @@ export const App: React.FC = () => {
       <main className="flex-1 ml-64 p-8 min-h-screen max-w-[calc(100vw-16rem)] overflow-x-hidden">
         <Routes>
           <Route path="/" element={<Navigate to={defaultPath} replace />} />
-          <Route path="/my-salary" element={<MySalaryPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/my-salary" element={<MySalaryPage />} />
           <Route path="/expenses-input" element={<ExpensesInputPage />} />
           <Route path="/expenses-stats" element={<ExpensesStatsPage />} />
           <Route path="/expenses-ledger" element={<ExpensesLedgerPage />} />
