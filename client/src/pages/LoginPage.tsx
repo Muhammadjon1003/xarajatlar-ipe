@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
-import { TrendingDown, User, Lock, AlertCircle } from 'lucide-react';
+import { TrendingDown, AlertCircle } from 'lucide-react';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
-  const [loginInput, setLoginInput] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [loginInput, setLoginInput] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -50,7 +50,7 @@ export const LoginPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Login / Foydalanuvchi Nomi *"
-            placeholder="admin yoki tel raqam"
+            placeholder="Login"
             value={loginInput}
             onChange={(e) => setLoginInput(e.target.value)}
             required
@@ -74,11 +74,6 @@ export const LoginPage: React.FC = () => {
             {loading ? 'Kirilmoqda...' : 'Tizimga Kirish'}
           </Button>
         </form>
-
-        <div className="mt-6 pt-4 border-t border-zinc-800/80 text-center text-xs text-zinc-500">
-          Direktor: <span className="text-orange-400 font-bold">admin</span> /{' '}
-          <span className="text-orange-400 font-bold">admin123</span>
-        </div>
       </div>
     </div>
   );
