@@ -15,35 +15,33 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('xarajatlar_user');
-    return savedUser
-      ? JSON.parse(savedUser)
-      : {
-          id: 'test-admin',
-          firstName: 'Admin',
-          lastName: 'Boshliq',
-          phone: '+998901234567',
-          roleCode: 'SUPER_ADMIN',
-          roleDisplayName: 'Direktor (Test Rejimi)',
-        };
+    return savedUser ? JSON.parse(savedUser) : null;
   });
 
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('xarajatlar_token') || 'test-token';
+    return localStorage.getItem('xarajatlar_token') || null;
   });
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Sync backend user if token exists
     const verifyUser = async () => {
+      const savedToken = localStorage.getItem('xarajatlar_token');
+      if (!savedToken) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const res = await api.get('/auth/me');
-        if (res.data.user) {
+        if (res.data && res.data.user) {
           setUser(res.data.user);
           localStorage.setItem('xarajatlar_user', JSON.stringify(res.data.user));
         }
       } catch (err) {
-        console.warn('Auth verification skipped (test mode active)', err);
+        console.warn('Session expired or invalid, logging out', err);
+        logout();
+      } finally {
+        setIsLoading(false);
       }
     };
     verifyUser();

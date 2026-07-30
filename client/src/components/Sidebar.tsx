@@ -8,11 +8,11 @@ import {
   Users,
   Clock,
   ArrowRightLeft,
-  Building2,
   TrendingDown,
   DollarSign,
-  Tag,
   LineChart,
+  Settings,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,7 +22,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { id: 'dashboard', label: 'Boshqaruv Paneli', icon: LayoutDashboard },
@@ -35,8 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'employees', label: 'Xodimlar va Rollar', icon: Users },
     { id: 'advances', label: 'Oylik Avanslar', icon: Clock },
     { id: 'shifts', label: 'Zamena', icon: ArrowRightLeft },
-    { id: 'branches-categories', label: 'Filial & Kategoriyalar', icon: Building2 },
-    { id: 'price-settings', label: 'Narx Sozlamalari', icon: Tag },
+    { id: 'settings', label: 'Tizim Sozlamalari', icon: Settings },
   ];
 
   return (
@@ -76,16 +75,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
         })}
       </nav>
 
-      {/* Active User Info Banner */}
+      {/* Active User Info Banner & Logout */}
       <div className="pt-4 border-t border-zinc-800/60 flex items-center justify-between">
         <div className="overflow-hidden">
           <p className="text-xs font-bold text-white truncate">
             {user?.firstName} {user?.lastName}
           </p>
           <span className="text-[11px] text-amber-400 font-semibold block">
-            {user?.roleDisplayName || 'Test Mode Active'}
+            {user?.roleDisplayName || 'Tizim Xodimi'}
           </span>
         </div>
+        <button
+          onClick={logout}
+          className="p-2 rounded-xl text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+          title="Tizimdan chiqish"
+        >
+          <LogOut size={16} />
+        </button>
       </div>
     </aside>
   );

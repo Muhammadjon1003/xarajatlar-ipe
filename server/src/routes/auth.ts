@@ -30,24 +30,30 @@ async function ensureDefaultRoles() {
 // POST /api/auth/login
 router.post('/login', async (req: AuthRequest, res: Response) => {
   try {
-    const { phone, password } = req.body;
+    const { password } = req.body;
+    const loginInput = String(req.body.login || req.body.phone || '').trim();
 
-    if (!phone || !password) {
-      return res.status(400).json({ error: 'Telefon raqam va parol kiritilishi shart' });
+    if (!loginInput || !password) {
+      return res.status(400).json({ error: 'Login va parol kiritilishi shart' });
     }
 
-    const employee = await prisma.employee.findUnique({
-      where: { phone },
+    const employee = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { username: loginInput },
+          { phone: loginInput },
+        ],
+      },
       include: { role: true },
     });
 
     if (!employee || !employee.isActive || !employee.passwordHash) {
-      return res.status(401).json({ error: 'Telefon raqam yoki parol noto‘g‘ri' });
+      return res.status(401).json({ error: 'Login yoki parol noto‘g‘ri' });
     }
 
     const isMatch = await bcrypt.compare(password, employee.passwordHash);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Telefon raqam yoki parol noto‘g‘ri' });
+      return res.status(401).json({ error: 'Login yoki parol noto‘g‘ri' });
     }
 
     const secret = process.env.JWT_SECRET || 'xarajatlar_ipe_super_secret_jwt_key_2026_uzs';
@@ -64,6 +70,7 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
         firstName: employee.firstName,
         lastName: employee.lastName,
         phone: employee.phone,
+        username: employee.username,
         roleCode: employee.role.code,
         roleDisplayName: employee.role.displayName,
       },

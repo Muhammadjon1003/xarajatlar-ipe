@@ -40,10 +40,12 @@ async function main() {
       update: {
         passwordHash,
         roleId: superAdminRole.id,
+        username: 'admin',
       },
       create: {
         firstName: 'Admin',
         lastName: 'Boshliq',
+        username: 'admin',
         phone: '+998901234567',
         passwordHash,
         isActive: true,

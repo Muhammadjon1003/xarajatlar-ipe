@@ -62,6 +62,7 @@ model Employee {
   id                String               @id @default(uuid())
   firstName         String
   lastName          String
+  username          String?              @unique
   phone             String?              @unique
   passwordHash      String?
   isActive          Boolean              @default(true)
