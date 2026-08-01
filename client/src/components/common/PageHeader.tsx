@@ -8,12 +8,12 @@ interface PageHeaderProps {
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, action }) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-white tracking-tight">{title}</h1>
-        <p className="text-sm text-zinc-400 mt-1 font-medium">{subtitle}</p>
+        <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">{title}</h1>
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1 font-medium">{subtitle}</p>
       </div>
-      {action && <div>{action}</div>}
+      {action && <div className="w-full sm:w-auto flex justify-start sm:justify-end">{action}</div>}
     </div>
   );
 };

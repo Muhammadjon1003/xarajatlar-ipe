@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
@@ -16,9 +16,11 @@ import { MonthlyAnalysisPage } from './pages/MonthlyAnalysisPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { MySalaryPage } from './pages/MySalaryPage';
 import { AdminPanelPage } from './pages/AdminPanelPage';
+import { Menu, TrendingDown } from 'lucide-react';
 
 export const App: React.FC = () => {
   const { user, isLoading } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -59,9 +61,34 @@ export const App: React.FC = () => {
   const defaultPath = getDefaultRoute();
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex text-zinc-100">
-      <Sidebar />
-      <main className="flex-1 ml-64 p-8 min-h-screen max-w-[calc(100vw-16rem)] overflow-x-hidden">
+    <div className="min-h-screen bg-[#09090b] flex flex-col lg:flex-row text-zinc-100">
+      {/* Mobile Top Header Bar */}
+      <header className="lg:hidden sticky top-0 z-30 bg-[#121215] border-b border-zinc-800/80 px-4 py-3 flex items-center justify-between shadow-md">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-white hover:bg-zinc-800 transition-colors"
+            title="Menyuni ochish"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-zinc-950 font-bold">
+              <TrendingDown size={18} />
+            </div>
+            <span className="font-extrabold text-sm text-white tracking-tight">Xarajatlar & Oylik</span>
+          </div>
+        </div>
+        <span className="text-xs text-amber-400 font-semibold px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          {user.firstName}
+        </span>
+      </header>
+
+      {/* Sidebar Navigation */}
+      <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+
+      {/* Main Content Area */}
+      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 min-h-screen w-full max-w-full overflow-x-hidden">
         <Routes>
           <Route path="/" element={<Navigate to={defaultPath} replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />

@@ -120,8 +120,8 @@ export const MonthlyAnalysisPage: React.FC = () => {
       />
 
       {/* Month & Year Filter Header */}
-      <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="bg-[#141417] border border-zinc-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <div>
             <label className="block text-xs font-semibold text-zinc-400 mb-1">Oy</label>
             <select
@@ -161,11 +161,11 @@ export const MonthlyAnalysisPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="text-right">
+        <div className="text-left sm:text-right">
           <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">
-            {getMonthName(month)} {year} — Jami Maosh Xarajatlari (Avanslar Bilan)
+            {getMonthName(month)} {year} — Jami Maosh Xarajatlari
           </span>
-          <h2 className="text-2xl font-extrabold text-orange-400">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-orange-400">
             {formatUZS(kpis?.totalSalaryExpense || 0)}
           </h2>
         </div>
