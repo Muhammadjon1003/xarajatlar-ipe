@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { Sidebar } from './components/Sidebar';
+import { BottomNav } from './components/BottomNav';
 import { DashboardPage } from './pages/DashboardPage';
 import { ExpensesInputPage } from './pages/ExpensesInputPage';
 import { ExpensesStatsPage } from './pages/ExpensesStatsPage';
@@ -87,8 +88,11 @@ export const App: React.FC = () => {
       {/* Sidebar Navigation */}
       <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
+      {/* Mobile Bottom Tab Bar (PWA Phone style) */}
+      <BottomNav onOpenMobileMenu={() => setIsMobileMenuOpen(true)} />
+
       {/* Main Content Area */}
-      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 min-h-screen w-full max-w-full overflow-x-hidden">
+      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 min-h-screen w-full max-w-full overflow-x-hidden">
         <Routes>
           <Route path="/" element={<Navigate to={defaultPath} replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
