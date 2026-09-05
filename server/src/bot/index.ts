@@ -25,6 +25,7 @@ interface PendingExpense {
   categoryName?: string;
   employeeId?: string;
   employeeName?: string;
+  waitingForNewCategory?: boolean;
 }
 
 // In-memory sessions
@@ -49,7 +50,8 @@ bot.command('start', async (ctx) => {
     await ctx.reply(
       `👋 Assalomu alaykum, *${existingAuth.name}*!\n` +
       `💼 Lavozimingiz: *${existingAuth.role}*\n\n` +
-      `📸 Xarajat kiritish uchun chek, to‘lov kvitansiyasi (Payme, Click, Uzum) yoki schyot-faktura rasmini yuboring!`,
+      `📸 Xarajat kiritish uchun chek, to‘lov kvitansiyasi (Payme, Click, Uzum) yoki schyot-faktura rasmini yuboring!\n\n` +
+      `💡 *Maslahat:* Rasm yuborayotganda izoh (caption) yozsangiz, o‘sha matn to‘g‘ridan-to‘g‘ri xarajat nomi sifatida olinadi.`,
       { parse_mode: 'Markdown' }
     );
     return;
@@ -118,7 +120,8 @@ bot.on('message:contact', async (ctx) => {
       `✅ *Xush kelibsiz, ${employee.firstName} ${employee.lastName}!* 🎉\n` +
       `💼 Lavozimingiz: *${employee.role.displayName}*\n\n` +
       `Siz muvaffaqiyatli avtorizatsiyadan o‘tdingiz.\n\n` +
-      `Endi har qanday xarajat cheki rasmini yuboring — sun'iy intellekt ma'lumotlarni avtomatik o‘qiydi! 📸`,
+      `Endi har qanday xarajat cheki rasmini yuboring — sun'iy intellekt ma'lumotlarni avtomatik o‘qiydi! 📸\n\n` +
+      `💡 *Maslahat:* Rasm yuborayotganda izoh (caption) qismiga xarajat nomini yozsangiz, o‘sha nom to‘g‘ridan-to‘g‘ri qabul qilinadi.`,
       {
         parse_mode: 'Markdown',
         reply_markup: { remove_keyboard: true },
@@ -160,6 +163,9 @@ bot.on('message:photo', async (ctx) => {
   });
 
   try {
+    // Check if user provided an image caption
+    const userCaption = ctx.message.caption?.trim();
+
     // Get highest resolution photo
     const photo = ctx.message.photo[ctx.message.photo.length - 1];
     const file = await ctx.api.getFile(photo.file_id);
@@ -169,17 +175,21 @@ bot.on('message:photo', async (ctx) => {
     const imgRes = await fetch(photoUrl);
     const buffer = Buffer.from(await imgRes.arrayBuffer());
 
-    // Extract using Gemini 2.5 Flash
+    // Extract using Gemini (with automatic multi-model fallback)
     const extracted = await extractExpenseFromReceipt(buffer, 'image/jpeg');
+
+    // Requirement 1: If caption exists, use that as the expense name; otherwise take from image
+    const finalExpenseName = userCaption || extracted.name;
 
     // Save initial state
     pendingExpenses.set(userId, {
       photoUrl,
-      name: extracted.name,
+      name: finalExpenseName,
       value: extracted.value,
       date: extracted.date,
       employeeId: user.id,
       employeeName: user.name,
+      waitingForNewCategory: false,
     });
 
     // Fetch branches from database
@@ -204,9 +214,11 @@ bot.on('message:photo', async (ctx) => {
     });
     branchKeyboard.row().text('❌ Bekor qilish', 'cancel_expense');
 
+    const captionNotice = userCaption ? ` _(izohdan olindi)_` : '';
+
     const resultText =
       `🧾 *Chek ma'lumotlari aniqlandi:*\n\n` +
-      `📝 *Nomi:* ${extracted.name}\n` +
+      `📝 *Nomi:* ${finalExpenseName}${captionNotice}\n` +
       `💰 *Summasi:* *${formatUZS(extracted.value)}*\n` +
       `📅 *Sanasi:* ${extracted.date}\n\n` +
       `🏢 *1-qadam: Xarajat qaysi filial uchun qilindi?* Quyidagi tugmalardan birini tanlang:`;
@@ -220,12 +232,12 @@ bot.on('message:photo', async (ctx) => {
     await ctx.api.editMessageText(
       ctx.chat.id,
       statusMsg.message_id,
-      `❌ *Chekni o‘qishda xatolik:*\n${error?.message || 'Noma\'lum xatolik'}\n\nIltimos, sifatliroq rasm yuborib ko‘ring.`
+      `❌ *Chekni o‘qishda xatolik:*\n${error?.message || 'Noma\'lum xatolik'}\n\nIltimos, qayta urinib ko‘ring yoki sifatliroq rasm yuboring.`
     );
   }
 });
 
-// Callback queries handler (Branch, Category, Confirm, Cancel)
+// Callback queries handler (Branch, Category, Add Category, Confirm, Cancel)
 bot.on('callback_query:data', async (ctx) => {
   const userId = ctx.from?.id;
   const data = ctx.callbackQuery.data;
@@ -265,17 +277,15 @@ bot.on('callback_query:data', async (ctx) => {
       orderBy: { name: 'asc' },
     });
 
-    if (categories.length === 0) {
-      await ctx.reply('⚠️ Tizimda toifalar (kategoriyalar) mavjud emas.');
-      return;
-    }
-
     // Generate dynamic inline keyboard for categories from DB
     const catKeyboard = new InlineKeyboard();
     categories.forEach((cat, idx) => {
       catKeyboard.text(`🏷️ ${cat.name}`, `cat:${cat.id}`);
       if (idx % 2 === 1) catKeyboard.row();
     });
+
+    // Requirement 2: Add "➕ Kategoriya qo'shish" button
+    catKeyboard.row().text('➕ Kategoriya qo‘shish', 'add_new_category');
     catKeyboard.row().text('❌ Bekor qilish', 'cancel_expense');
 
     await ctx.editMessageText(
@@ -291,7 +301,22 @@ bot.on('callback_query:data', async (ctx) => {
     return;
   }
 
-  // 3. Category selected
+  // 3. User clicked "➕ Kategoriya qo'shish"
+  if (data === 'add_new_category') {
+    pending.waitingForNewCategory = true;
+    await ctx.editMessageText(
+      `➕ *Yangi toifa (kategoriya) qo‘shish*\n\n` +
+      `Iltimos, yangi kategoriya nomini xabar ko‘rinishida yozib yuboring:\n` +
+      `_(Masalan: "Kantselyariya", "Ofis ta'miri", "Mebel", "Xo‘jalik mollari")_`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: new InlineKeyboard().text('❌ Bekor qilish', 'cancel_expense'),
+      }
+    );
+    return;
+  }
+
+  // 4. Existing category selected
   if (data.startsWith('cat:')) {
     const categoryId = data.replace('cat:', '');
     const category = await prisma.expenseCategory.findUnique({ where: { id: categoryId } });
@@ -303,6 +328,7 @@ bot.on('callback_query:data', async (ctx) => {
 
     pending.categoryId = category.id;
     pending.categoryName = category.name;
+    pending.waitingForNewCategory = false;
 
     // Final Confirmation Keyboard
     const confirmKeyboard = new InlineKeyboard()
@@ -327,7 +353,7 @@ bot.on('callback_query:data', async (ctx) => {
     return;
   }
 
-  // 4. Final confirmation -> save to DB via Prisma
+  // 5. Final confirmation -> save to DB via Prisma
   if (data === 'confirm_expense') {
     if (!pending.branchId || !pending.categoryId) {
       await ctx.reply('⚠️ Filial yoki toifa tanlanmagan.');
@@ -368,6 +394,79 @@ bot.on('callback_query:data', async (ctx) => {
       await ctx.editMessageText('❌ Ma\'lumotlar bazasiga saqlashda xatolik yuz berdi: ' + (dbError?.message || 'DB Error'));
     }
   }
+});
+
+// Text message handler (Handles new category input or general help)
+bot.on('message:text', async (ctx) => {
+  const userId = ctx.from?.id;
+  if (!userId) return;
+
+  const pending = pendingExpenses.get(userId);
+
+  // If user is inputting a new category name
+  if (pending && pending.waitingForNewCategory) {
+    const rawCategoryName = ctx.message.text.trim();
+
+    if (!rawCategoryName || rawCategoryName.startsWith('/')) {
+      await ctx.reply('⚠️ Iltimos, to‘g‘ri kategoriya nomini yozing (masalan: "Xo‘jalik mollari"):');
+      return;
+    }
+
+    try {
+      // Find existing category (case-insensitive) or create new one in Prisma
+      let category = await prisma.expenseCategory.findFirst({
+        where: {
+          name: {
+            equals: rawCategoryName,
+            mode: 'insensitive',
+          },
+        },
+      });
+
+      if (!category) {
+        category = await prisma.expenseCategory.create({
+          data: { name: rawCategoryName },
+        });
+      }
+
+      pending.categoryId = category.id;
+      pending.categoryName = category.name;
+      pending.waitingForNewCategory = false;
+
+      // Show confirmation card
+      const confirmKeyboard = new InlineKeyboard()
+        .text('✅ Tasdiqlash va Saqlash', 'confirm_expense')
+        .row()
+        .text('❌ Bekor qilish', 'cancel_expense');
+
+      await ctx.reply(
+        `✨ Yangi toifa tanlandi: *${category.name}*!\n\n` +
+        `📋 *Xarajat ma'lumotlarini tasdiqlaysizmi?*\n\n` +
+        `📝 *Nomi:* ${pending.name}\n` +
+        `💰 *Summasi:* *${formatUZS(pending.value)}*\n` +
+        `🏢 *Filiali:* ${pending.branchName}\n` +
+        `🏷️ *Toifasi:* *${pending.categoryName}*\n` +
+        `📅 *Sanasi:* ${pending.date}\n` +
+        `👤 *Kirituvchi:* ${pending.employeeName}\n\n` +
+        `Barcha ma'lumotlar to‘g‘ri bo‘lsa, *"Tasdiqlash"* tugmasini bosing:`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: confirmKeyboard,
+        }
+      );
+    } catch (err: any) {
+      console.error('Error creating category:', err);
+      await ctx.reply('⚠️ Yangi kategoriya saqlashda xatolik yuz berdi: ' + (err?.message || 'DB xatosi'));
+    }
+    return;
+  }
+
+  // Generic message
+  await ctx.reply(
+    `📸 *Xarajat kiritish uchun chek rasmini yuboring!*\n\n` +
+    `💡 *Maslahat:* Rasm yuborayotganda izoh (caption) qismiga xarajat nomini yozsangiz, o‘sha nom avtomatik qabul qilinadi.`,
+    { parse_mode: 'Markdown' }
+  );
 });
 
 // Error handling
