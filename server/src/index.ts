@@ -15,7 +15,7 @@ import teacherGroupsRoutes from './routes/teacher-groups';
 import adminAktivRoutes from './routes/admin-aktiv';
 import settingsRoutes from './routes/settings';
 import { webhookCallback } from 'grammy';
-import { bot, startTelegramBot } from './bot';
+import { bot } from './bot';
 
 dotenv.config();
 
@@ -71,9 +71,6 @@ app.get('/health', (_req, res) => {
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`🚀 Xarajatlar & Oyliklar Backend Server running on port ${PORT}`);
-    if (process.env.START_BOT === 'true') {
-      startTelegramBot().catch((err) => console.error('Telegram bot startup error:', err));
-    }
   });
 }
 

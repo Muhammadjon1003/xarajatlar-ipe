@@ -14,50 +14,54 @@ export interface ExtractedExpense {
   rawNote?: string;
 }
 
-// Fallback models in priority order to guarantee 99.9% uptime and avoid 503 "High Demand" spikes
+// Fallback models in priority order for maximum speed (<1s) and high reliability
 const CANDIDATE_MODELS = [
-  'gemini-3.6-flash',
   'gemini-flash-latest',
+  'gemini-flash-lite-latest',
+  'gemini-3.6-flash',
   'gemini-3.1-flash-lite',
-  'gemini-3.5-flash-lite',
 ];
 
 /**
- * Uses Google Gemini (with automatic multi-model fallback and retry) to extract expense data.
+ * Uses Google Gemini (with automatic fast multi-model fallback) to extract expense data.
  */
 export async function extractExpenseFromReceipt(
   imageBuffer: Buffer,
-  mimeType: string = 'image/jpeg'
+  mimeType: string = 'image/jpeg',
+  userCaption?: string
 ): Promise<ExtractedExpense> {
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const prompt = `Siz buxgalteriya va cheklarni skaner qiluvchi sun'iy intellektsiz.
-Ushbu rasm chek, to'lov kvitansiyasi (Payme, Click, Uzum, bank cheki) yoki schyot-faktura hisoblanadi.
-Rasmdan quyidagi ma'lumotlarni o'zbek tilida aniqlab oling:
-1. "name": Xarajatning qisqa mazmuni yoki do'kon/xizmat nomi (masalan: "Kantselyariya buyumlari", "Korzinka supermarket", "Elektr energiyasi to'lovi", "Ofis suvi").
-2. "value": To'langan yakuniy jami summa (faqat so'mda son ko'rinishida, masalan: 125000). Har qanday valyuta belgilarisiz raqam bo'lsin.
-3. "date": Chekdagi sana (YYYY-MM-DD formatida). Agar sana topilmasa yoki noaniq bo'lsa, bugungi sanani qo'ying: "${todayStr}".
+  const captionHint = userCaption?.trim()
+    ? `\nIzoh: Foydalanuvchi quyidagi izohni yuborgan: "${userCaption.trim()}". Xarajat nomi sifatida asosan ushbu izohdan foydalaning.`
+    : '';
+
+  const prompt = `Siz buxgalteriya va cheklarni skaner qiluvchi tezkor sun'iy intellektsiz.
+Ushbu rasm to'lov cheki yoki kvitansiya hisoblanadi.${captionHint}
+Rasmdan quyidagilarni aniqlang:
+1. "name": Xarajat nomi yoki do'kon nomi. (Agar foydalanuvchi izoh yozgan bo'lsa, o'sha izohni oling).
+2. "value": Yakuniy to'langan summa (faqat so'mda musbat raqam, masalan: 125000).
+3. "date": Chekdagi sana (YYYY-MM-DD formatida). Agar sana topilmasa, bugungi sanani qo'ying: "${todayStr}".
 4. "confidence": "HIGH", "MEDIUM" yoki "LOW".
-5. "rawNote": Chekdan olingan qo'shimcha tafsilotlar (agar mavjud bo'lsa).`;
+5. "rawNote": Chekdan olingan qisqa tafsilotlar.`;
 
   let lastError: any = null;
 
   for (const model of CANDIDATE_MODELS) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        console.log(`🤖 Attempting OCR with model: ${model} (attempt ${attempt})...`);
+    try {
+      console.log(`🤖 Attempting OCR with model: ${model}...`);
 
-        const response = await ai.models.generateContent({
-          model,
-          contents: [
-            {
-              inlineData: {
-                mimeType,
-                data: imageBuffer.toString('base64'),
-              },
+      const response = await ai.models.generateContent({
+        model,
+        contents: [
+          {
+            inlineData: {
+              mimeType,
+              data: imageBuffer.toString('base64'),
             },
-            { text: prompt },
-          ],
+          },
+          { text: prompt },
+        ],
           config: {
             responseMimeType: 'application/json',
             responseSchema: {
@@ -94,7 +98,7 @@ Rasmdan quyidagi ma'lumotlarni o'zbek tilida aniqlab oling:
         console.log(`✅ OCR successful using model: ${model}`);
 
         return {
-          name: parsed.name || 'Nomaʼlum xarajat',
+          name: parsed.name || (userCaption?.trim() || 'Nomaʼlum xarajat'),
           value: Math.abs(Number(parsed.value) || 0),
           date: parsed.date || todayStr,
           confidence: parsed.confidence || 'MEDIUM',
@@ -102,18 +106,13 @@ Rasmdan quyidagi ma'lumotlarni o'zbek tilida aniqlab oling:
         };
       } catch (err: any) {
         lastError = err;
-        console.warn(`⚠️ Model ${model} attempt ${attempt} failed: ${err?.message || err}`);
-
-        // If error is 503 (High Demand) or 429 (Rate Limit), pause 800ms before retry or next model
+        console.warn(`⚠️ Model ${model} failed: ${err?.message || err}`);
+        // If high demand or rate limit, brief pause then immediately try next model
         if (err?.message?.includes('503') || err?.message?.includes('429')) {
-          await new Promise((res) => setTimeout(res, 800));
-        } else {
-          // If 404 or unsupported, immediately break to next model
-          break;
+          await new Promise((res) => setTimeout(res, 400));
         }
       }
     }
-  }
 
   console.error('All Gemini fallback models exhausted:', lastError?.message || lastError);
   throw new Error('Chekni tahlil qilishda xatolik yuz berdi: ' + (lastError?.message || 'Server band'));

@@ -31,6 +31,24 @@ function formatUZS(amount: number): string {
   return new Intl.NumberFormat('uz-UZ').format(amount) + " so'm";
 }
 
+// Deduplicate updates to prevent double processing from Telegram webhook retries
+const processedUpdates = new Set<number>();
+bot.use(async (ctx, next) => {
+  if (ctx.update?.update_id) {
+    const uid = ctx.update.update_id;
+    if (processedUpdates.has(uid)) {
+      console.log(`⚠️ Telegram duplicate update ${uid} ignored.`);
+      return;
+    }
+    processedUpdates.add(uid);
+    if (processedUpdates.size > 2000) {
+      const first = processedUpdates.values().next().value;
+      if (first !== undefined) processedUpdates.delete(first);
+    }
+  }
+  await next();
+});
+
 // /start command
 bot.command('start', async (ctx) => {
   const userId = ctx.from?.id;
@@ -171,7 +189,7 @@ bot.on('message:photo', async (ctx) => {
     const buffer = Buffer.from(await imgRes.arrayBuffer());
 
     // Extract using Gemini (with automatic multi-model fallback)
-    const extracted = await extractExpenseFromReceipt(buffer, 'image/jpeg');
+    const extracted = await extractExpenseFromReceipt(buffer, 'image/jpeg', userCaption);
 
     // Requirement 1: If caption exists, use that as the expense name; otherwise take from image
     const finalExpenseName = userCaption || extracted.name;
