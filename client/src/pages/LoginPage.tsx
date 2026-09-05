@@ -36,7 +36,7 @@ export const LoginPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-extrabold text-white">Xarajatlar & Oyliklar</h1>
           <p className="text-zinc-400 text-xs mt-1">
-            Tizimga kirish uchun login va parolingizni kiriting
+            Tizimga kirish uchun login yoki telefon raqamingiz va parolingizni kiriting
           </p>
         </div>
 
@@ -49,8 +49,8 @@ export const LoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            label="Login / Foydalanuvchi Nomi *"
-            placeholder="Login"
+            label="Login yoki Telefon Raqami *"
+            placeholder="admin yoki +998 90 123 45 67"
             value={loginInput}
             onChange={(e) => setLoginInput(e.target.value)}
             required

@@ -19,7 +19,10 @@ export const EmployeeTableRow: React.FC<EmployeeTableRowProps> = ({ employee, on
         {employee.firstName} {employee.lastName}
       </td>
       <td className="px-5 py-3.5 font-semibold text-orange-400 text-sm">
-        {loginDisplay}
+        {employee.username || '—'}
+      </td>
+      <td className="px-5 py-3.5 text-zinc-300 text-sm font-mono">
+        {employee.phone || '—'}
       </td>
       <td className="px-5 py-3.5">
         <Badge status={employee.role?.displayName || 'Xodim'} />

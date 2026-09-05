@@ -31,6 +31,7 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -40,7 +41,8 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
     if (editingEmployee) {
       setFirstName(editingEmployee.firstName);
       setLastName(editingEmployee.lastName);
-      setUsername(editingEmployee.username || editingEmployee.phone || '');
+      setUsername(editingEmployee.username || '');
+      setPhone(editingEmployee.phone || '');
       setPassword('');
       setRoleId(editingEmployee.roleId || editingEmployee.role?.id || '');
       setIsActive(editingEmployee.isActive);
@@ -48,6 +50,7 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
       setFirstName('');
       setLastName('');
       setUsername('');
+      setPhone('');
       setPassword('');
       setIsActive(true);
       if (availableRoles.length > 0) setRoleId(availableRoles[0].id);
@@ -62,7 +65,7 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
         firstName,
         lastName,
         username: username.trim(),
-        phone: username.trim(),
+        phone: phone.trim(),
         password: password || undefined,
         roleId,
         isActive,
@@ -108,7 +111,17 @@ export const EmployeeModalForm: React.FC<EmployeeModalFormProps> = ({
             required
           />
           <Input
-            label={`Parol ${editingEmployee ? '(O‘zgarmasa bo‘sh)' : '*'}`}
+            label="Telefon Raqami *"
+            placeholder="+998 90 123 45 67"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <Input
+            label={`Parol ${editingEmployee ? '(O‘zgarmasa bo‘sh qoldiring)' : '*'}`}
             type="password"
             placeholder="••••••••"
             value={password}

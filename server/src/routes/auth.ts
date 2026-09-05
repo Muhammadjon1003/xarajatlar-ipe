@@ -86,12 +86,25 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
       console.error('Super Admin auto-ensure warning:', e);
     }
 
-    // Find employee by username, phone, or if loginInput === 'admin' match Super Admin
+    // Find employee by username, phone (with various formats), or if loginInput === 'admin' match Super Admin
+    const cleanPhone = loginInput.replace(/[^\d+]/g, '');
+    const digitsOnly = cleanPhone.replace(/\D/g, '');
+
+    const phoneOrConditions: any[] = [{ phone: loginInput }];
+    if (digitsOnly) {
+      phoneOrConditions.push({ phone: cleanPhone });
+      phoneOrConditions.push({ phone: '+' + digitsOnly });
+      phoneOrConditions.push({ phone: digitsOnly });
+      if (digitsOnly.length >= 9) {
+        phoneOrConditions.push({ phone: { endsWith: digitsOnly.slice(-9) } });
+      }
+    }
+
     let employee = await prisma.employee.findFirst({
       where: {
         OR: [
           { username: loginInput },
-          { phone: loginInput },
+          ...phoneOrConditions,
           ...(loginInput === 'admin' || loginInput === 'admin123' ? [{ role: { code: 'SUPER_ADMIN' } }] : []),
         ],
       },

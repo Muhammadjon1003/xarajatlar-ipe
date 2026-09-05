@@ -45,6 +45,11 @@ app.get('/health', (_req, res) => {
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`🚀 Xarajatlar & Oyliklar Backend Server running on port ${PORT}`);
+    if (process.env.START_BOT === 'true') {
+      import('./bot').then(({ startTelegramBot }) => {
+        startTelegramBot().catch((err) => console.error('Telegram bot startup error:', err));
+      });
+    }
   });
 }
 

@@ -54,10 +54,15 @@ router.post(
   async (req: AuthRequest, res: Response) => {
     try {
       const { firstName, lastName, username, phone, password, roleId, defaultBaseSalary } = req.body;
-      const loginInput = String(username || phone || '').trim();
+      const cleanUsername = String(username || '').trim();
+      const cleanPhone = String(phone || '').trim();
 
       if (!firstName || !lastName || !roleId) {
         return res.status(400).json({ error: 'Ism, familiya va rol kiritilishi shart' });
+      }
+
+      if (!cleanUsername && !cleanPhone) {
+        return res.status(400).json({ error: 'Login yoki telefon raqami kiritilishi shart' });
       }
 
       // Non-superadmin cannot assign SUPER_ADMIN role
@@ -66,17 +71,21 @@ router.post(
         return res.status(403).json({ error: 'Faqat Direktorgina Direktor lavozimini tayinlashi mumkin' });
       }
 
-      if (loginInput) {
-        const existing = await prisma.employee.findFirst({
-          where: {
-            OR: [
-              { username: loginInput },
-              { phone: loginInput },
-            ],
-          },
+      if (cleanUsername) {
+        const existingUser = await prisma.employee.findFirst({
+          where: { username: cleanUsername },
         });
-        if (existing) {
-          return res.status(400).json({ error: 'Ushbu login yoki telefon raqamli xodim allaqachon mavjud' });
+        if (existingUser) {
+          return res.status(400).json({ error: 'Ushbu login band, boshqa login tanlang' });
+        }
+      }
+
+      if (cleanPhone) {
+        const existingPhone = await prisma.employee.findFirst({
+          where: { phone: cleanPhone },
+        });
+        if (existingPhone) {
+          return res.status(400).json({ error: 'Ushbu telefon raqamli xodim allaqachon mavjud' });
         }
       }
 
@@ -86,8 +95,8 @@ router.post(
         data: {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          username: loginInput || null,
-          phone: phone ? phone.trim() : loginInput || null,
+          username: cleanUsername || cleanPhone,
+          phone: cleanPhone || null,
           passwordHash,
           roleId,
           defaultBaseSalary: defaultBaseSalary !== undefined ? Number(defaultBaseSalary) : null,
@@ -153,9 +162,30 @@ router.put(
         isActive: isActive !== undefined ? Boolean(isActive) : undefined,
       };
 
-      if (loginInput) {
-        dataToUpdate.username = loginInput;
-        dataToUpdate.phone = phone ? phone.trim() : loginInput;
+      if (username !== undefined) {
+        const cleanUser = String(username).trim();
+        if (cleanUser) {
+          const existingUser = await prisma.employee.findFirst({
+            where: { username: cleanUser, NOT: { id } },
+          });
+          if (existingUser) {
+            return res.status(400).json({ error: 'Ushbu login band, boshqa login tanlang' });
+          }
+        }
+        dataToUpdate.username = cleanUser || null;
+      }
+
+      if (phone !== undefined) {
+        const cleanPhone = String(phone).trim();
+        if (cleanPhone) {
+          const existingPhone = await prisma.employee.findFirst({
+            where: { phone: cleanPhone, NOT: { id } },
+          });
+          if (existingPhone) {
+            return res.status(400).json({ error: 'Ushbu telefon raqamli xodim allaqachon mavjud' });
+          }
+        }
+        dataToUpdate.phone = cleanPhone || null;
       }
 
       if (password) {
