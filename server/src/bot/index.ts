@@ -158,7 +158,7 @@ bot.on('message:photo', async (ctx) => {
   }
 
   const user = authenticatedUsers.get(userId)!;
-  const statusMsg = await ctx.reply('🔍 *Gemini sun\'iy intellekti chekni tahlil qilmoqda...* ⏳', {
+  const statusMsg = await ctx.reply('🔍 *Chek tahlil qilinmoqda...* ⏳', {
     parse_mode: 'Markdown',
   });
 
