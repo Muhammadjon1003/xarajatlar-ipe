@@ -51,7 +51,7 @@ router.post('/', authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'EXPENSE_CLERK']), as
 // PUT /api/categories/:id
 router.put('/:id', authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'EXPENSE_CLERK']), async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, description } = req.body;
 
     if (!name || !name.trim()) {
@@ -74,7 +74,7 @@ router.put('/:id', authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'EXPENSE_CLERK']), 
 // DELETE /api/categories/:id
 router.delete('/:id', authorizeRoles(['SUPER_ADMIN']), async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.expenseCategory.delete({ where: { id } });
     return res.json({ message: 'Kategoriya o‘chirildi' });
   } catch (error) {

@@ -84,7 +84,7 @@ router.put(
   authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
   async (req: AuthRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { status } = req.body; // 'APPROVED' or 'REJECTED'
 
       if (!['APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
@@ -116,7 +116,7 @@ router.delete(
   authorizeRoles(['SUPER_ADMIN', 'MANAGER']),
   async (req: AuthRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       await prisma.salaryAdvance.delete({ where: { id } });
       return res.json({ message: 'Avans o‘chirildi' });
     } catch (error) {

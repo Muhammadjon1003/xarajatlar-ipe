@@ -129,7 +129,7 @@ router.put(
   authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
   async (req: AuthRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { firstName, lastName, username, phone, password, roleId, defaultBaseSalary, isActive } = req.body;
       const loginInput = String(username || phone || '').trim();
 
@@ -143,7 +143,7 @@ router.put(
       }
 
       // Non-superadmin cannot edit a SUPER_ADMIN account
-      if (existingEmp.role.code === 'SUPER_ADMIN' && req.user?.roleCode !== 'SUPER_ADMIN') {
+      if ((existingEmp as any).role?.code === 'SUPER_ADMIN' && req.user?.roleCode !== 'SUPER_ADMIN') {
         return res.status(403).json({ error: 'Faqat Direktorgina Direktor profilini tahrirlashi mumkin' });
       }
 
@@ -221,7 +221,7 @@ router.delete(
   authorizeRoles(['SUPER_ADMIN']),
   async (req: AuthRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       await prisma.employee.update({
         where: { id },
         data: { isActive: false },

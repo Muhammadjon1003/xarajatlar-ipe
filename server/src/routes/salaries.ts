@@ -169,7 +169,7 @@ router.put(
   authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
   async (req: AuthRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { baseSalary } = req.body;
 
       if (baseSalary === undefined || isNaN(Number(baseSalary))) {
@@ -228,7 +228,7 @@ router.put(
   authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
   async (req: AuthRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { isPaid } = req.body;
 
       const salary = await prisma.monthlySalary.update({

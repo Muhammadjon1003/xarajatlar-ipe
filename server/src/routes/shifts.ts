@@ -86,7 +86,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 // PUT /api/shifts/:id/status (Absent employee, covering employee, or manager/admin can update status!)
 router.put('/:id/status', async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { status } = req.body;
 
     if (!['APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
@@ -127,7 +127,7 @@ router.put('/:id/status', async (req: AuthRequest, res: Response) => {
 // DELETE /api/shifts/:id
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const existingShift = await prisma.oneTimeShift.findUnique({ where: { id } });
     if (!existingShift) {
       return res.status(404).json({ error: 'Smena topilmadi' });

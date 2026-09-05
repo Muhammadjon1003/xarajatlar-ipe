@@ -48,7 +48,7 @@ router.post('/', authorizeRoles(['SUPER_ADMIN', 'MANAGER']), async (req: AuthReq
 // PUT /api/branches/:id
 router.put('/:id', authorizeRoles(['SUPER_ADMIN', 'MANAGER']), async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name } = req.body;
 
     if (!name || !name.trim()) {
@@ -68,7 +68,7 @@ router.put('/:id', authorizeRoles(['SUPER_ADMIN', 'MANAGER']), async (req: AuthR
 // DELETE /api/branches/:id
 router.delete('/:id', authorizeRoles(['SUPER_ADMIN']), async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.branch.delete({ where: { id } });
     return res.json({ message: 'Filial o‘chirildi' });
   } catch (error) {

@@ -101,7 +101,8 @@ router.delete(
   authorizeRoles(['SUPER_ADMIN', 'MANAGER', 'PAYROLL_ACCOUNTANT']),
   async (req: AuthRequest, res: Response) => {
     try {
-      await prisma.teacherGroupSalary.delete({ where: { id: req.params.id } });
+      const id = req.params.id as string;
+      await prisma.teacherGroupSalary.delete({ where: { id } });
       return res.json({ message: "Guruh o'chirildi" });
     } catch (err) {
       return res.status(500).json({ error: "Guruhni o'chirishda xatolik" });

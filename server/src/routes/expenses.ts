@@ -111,7 +111,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 // PUT /api/expenses/:id
 router.put('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, value, date, receiptUrl, branchId, categoryId, createdById } = req.body;
 
     const expense = await prisma.expense.update({
@@ -148,7 +148,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 // DELETE /api/expenses/:id
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.expense.delete({ where: { id } });
     return res.json({ message: 'Xarajat o‘chirildi' });
   } catch (error) {
