@@ -5,12 +5,7 @@ import { extractExpenseFromReceipt } from './geminiScanner';
 
 dotenv.config();
 
-const token = process.env.TELEGRAM_BOT_TOKEN;
-
-if (!token) {
-  console.error('❌ TELEGRAM_BOT_TOKEN is missing in environment');
-  process.exit(1);
-}
+const token = process.env.TELEGRAM_BOT_TOKEN || '';
 
 export const bot = new Bot(token);
 

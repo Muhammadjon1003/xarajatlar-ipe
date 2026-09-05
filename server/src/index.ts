@@ -14,6 +14,8 @@ import analyticsRoutes from './routes/analytics';
 import teacherGroupsRoutes from './routes/teacher-groups';
 import adminAktivRoutes from './routes/admin-aktiv';
 import settingsRoutes from './routes/settings';
+import { webhookCallback } from 'grammy';
+import { bot } from './bot';
 
 dotenv.config();
 
@@ -22,6 +24,30 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+
+// 24/7 Telegram Cloud Webhook on Vercel
+app.use('/api/telegram', webhookCallback(bot, 'express'));
+
+// Endpoint to view or trigger webhook registration
+app.get('/api/telegram-webhook/setup', async (_req, res) => {
+  try {
+    const webhookUrl = 'https://xarajatlar-ipe.vercel.app/api/telegram';
+    await bot.api.setWebhook(webhookUrl, { drop_pending_updates: true });
+    const info = await bot.api.getWebhookInfo();
+    return res.json({ status: 'ok', message: 'Webhook muvaffaqiyatli o‘rnatildi', webhookUrl, info });
+  } catch (err: any) {
+    return res.status(500).json({ status: 'error', message: err?.message });
+  }
+});
+
+app.get('/api/telegram-webhook/info', async (_req, res) => {
+  try {
+    const info = await bot.api.getWebhookInfo();
+    return res.json(info);
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message });
+  }
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
