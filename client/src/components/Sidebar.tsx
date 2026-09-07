@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { InstallAppButton } from './common/InstallAppButton';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -110,6 +111,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
             );
           })}
         </nav>
+
+        {/* PWA Phone Install Button */}
+        <div className="pt-3 pb-1">
+          <InstallAppButton variant="sidebar" />
+        </div>
 
         {/* Active User Info Banner & Logout */}
         <div className="pt-4 border-t border-zinc-800/60 flex items-center justify-between">

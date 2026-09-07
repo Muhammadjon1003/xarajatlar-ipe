@@ -1,0 +1,63 @@
+{
+  "id": "/",
+  "name": "Xarajatlar & Oyliklar - Moliya Boshqaruvi",
+  "short_name": "Xarajatlar",
+  "description": "Xarajatlar va xodimlar oylik maoshlarini hisoblash va boshqarish tizimi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#09090b",
+  "theme_color": "#f97316",
+  "categories": ["finance", "business", "productivity"],
+  "lang": "uz",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Xarajat Kiritish",
+      "short_name": "Xarajat",
+      "description": "Yangi xarajat kiritish",
+      "url": "/expenses-input",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Boshqaruv Paneli",
+      "short_name": "Boshqaruv",
+      "description": "Moliyaviy ko'rsatkichlar",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Oyliklar",
+      "short_name": "Oyliklar",
+      "description": "Xodimlar oylik maoshlari",
+      "url": "/salaries",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

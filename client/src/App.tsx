@@ -17,6 +17,7 @@ import { MonthlyAnalysisPage } from './pages/MonthlyAnalysisPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { MySalaryPage } from './pages/MySalaryPage';
 import { AdminPanelPage } from './pages/AdminPanelPage';
+import { InstallAppButton } from './components/common/InstallAppButton';
 import { Menu, TrendingDown } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -80,9 +81,12 @@ export const App: React.FC = () => {
             <span className="font-extrabold text-sm text-white tracking-tight">Xarajatlar & Oylik</span>
           </div>
         </div>
-        <span className="text-xs text-amber-400 font-semibold px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          {user.firstName}
-        </span>
+        <div className="flex items-center gap-2">
+          <InstallAppButton variant="header" />
+          <span className="text-xs text-amber-400 font-semibold px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            {user.firstName}
+          </span>
+        </div>
       </header>
 
       {/* Sidebar Navigation */}
