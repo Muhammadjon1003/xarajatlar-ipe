@@ -9,7 +9,6 @@ import {
   Menu,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { InstallAppButton } from './common/InstallAppButton';
 
 interface BottomNavProps {
   onOpenMobileMenu: () => void;
@@ -57,9 +56,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenMobileMenu }) => {
           </Link>
         );
       })}
-
-      {/* Quick PWA Install Tab (if not installed yet) */}
-      <InstallAppButton variant="bottom-nav" />
 
       {/* Menu Drawer Opener Button */}
       <button
