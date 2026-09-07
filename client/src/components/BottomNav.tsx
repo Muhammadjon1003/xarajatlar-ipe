@@ -9,6 +9,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { InstallAppButton } from './common/InstallAppButton';
 
 interface BottomNavProps {
   onOpenMobileMenu: () => void;
@@ -35,7 +36,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenMobileMenu }) => {
       ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#121215]/95 backdrop-blur-md border-t border-zinc-800/80 px-2 py-1.5 flex items-center justify-around shadow-2xl">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#121215]/95 backdrop-blur-md border-t border-zinc-800/80 px-2 pt-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-2xl">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
@@ -43,7 +44,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenMobileMenu }) => {
           <Link
             key={item.path}
             to={item.path}
-            className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold transition-all ${
+            className={`flex flex-col items-center gap-0.5 px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all ${
               isActive
                 ? 'text-orange-400 font-extrabold'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -52,15 +53,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenMobileMenu }) => {
             <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-orange-500/15 text-orange-400' : ''}`}>
               <Icon size={20} />
             </div>
-            <span className="truncate max-w-[64px]">{item.label}</span>
+            <span className="truncate max-w-[60px]">{item.label}</span>
           </Link>
         );
       })}
 
+      {/* Quick PWA Install Tab (if not installed yet) */}
+      <InstallAppButton variant="bottom-nav" />
+
       {/* Menu Drawer Opener Button */}
       <button
         onClick={onOpenMobileMenu}
-        className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[10px] font-bold text-zinc-400 hover:text-zinc-200"
+        className="flex flex-col items-center gap-0.5 px-2.5 py-1 rounded-xl text-[10px] font-bold text-zinc-400 hover:text-zinc-200 active:scale-95 transition-all"
       >
         <div className="p-1 rounded-xl">
           <Menu size={20} />

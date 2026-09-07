@@ -65,25 +65,27 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#09090b] flex flex-col lg:flex-row text-zinc-100">
       {/* Mobile Top Header Bar */}
-      <header className="lg:hidden sticky top-0 z-30 bg-[#121215] border-b border-zinc-800/80 px-4 py-3 flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-3">
+      <header className="lg:hidden sticky top-0 z-30 bg-[#121215]/95 backdrop-blur-md border-b border-zinc-800/80 px-3 sm:px-4 py-2.5 flex items-center justify-between shadow-md pt-[max(0.6rem,env(safe-area-inset-top))]">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-white hover:bg-zinc-800 transition-colors shrink-0"
             title="Menyuni ochish"
           >
-            <Menu size={20} />
+            <Menu size={19} />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-zinc-950 font-bold">
-              <TrendingDown size={18} />
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-orange-500 flex items-center justify-center text-zinc-950 font-bold shrink-0">
+              <TrendingDown size={16} />
             </div>
-            <span className="font-extrabold text-sm text-white tracking-tight">Xarajatlar & Oylik</span>
+            <span className="font-extrabold text-sm text-white tracking-tight truncate max-w-[110px] xs:max-w-[150px] sm:max-w-none">
+              Xarajatlar & Oylik
+            </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <InstallAppButton variant="header" />
-          <span className="text-xs text-amber-400 font-semibold px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          <span className="text-xs text-amber-400 font-semibold px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 max-w-[80px] sm:max-w-none truncate">
             {user.firstName}
           </span>
         </div>
@@ -96,7 +98,7 @@ export const App: React.FC = () => {
       <BottomNav onOpenMobileMenu={() => setIsMobileMenuOpen(true)} />
 
       {/* Main Content Area */}
-      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 min-h-screen w-full max-w-full overflow-x-hidden">
+      <main className="flex-1 lg:ml-64 p-3.5 sm:p-6 lg:p-8 pb-32 lg:pb-8 min-h-screen w-full max-w-full overflow-x-hidden">
         <Routes>
           <Route path="/" element={<Navigate to={defaultPath} replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />

@@ -88,7 +88,7 @@ export const ExpenseModalForm: React.FC<ExpenseModalFormProps> = ({
           required
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <CurrencyInput
             label="Summa (UZS) *"
             value={value}
@@ -105,7 +105,7 @@ export const ExpenseModalForm: React.FC<ExpenseModalFormProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wide">
               Filial *
@@ -150,11 +150,11 @@ export const ExpenseModalForm: React.FC<ExpenseModalFormProps> = ({
           onUploadComplete={(url) => setReceiptUrl(url)}
         />
 
-        <div className="flex justify-end gap-3 pt-4">
-          <Button variant="secondary" type="button" onClick={onClose}>
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-4 sticky bottom-0 bg-[#141417] pb-1">
+          <Button variant="secondary" type="button" onClick={onClose} className="w-full sm:w-auto">
             Bekor Qilish
           </Button>
-          <Button variant="primary" type="submit" disabled={loading}>
+          <Button variant="primary" type="submit" disabled={loading} className="w-full sm:w-auto">
             {loading ? 'Saqlanmoqda...' : 'Saqlash'}
           </Button>
         </div>
