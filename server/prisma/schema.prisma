@@ -67,6 +67,7 @@ model Employee {
   passwordHash      String?
   isActive          Boolean              @default(true)
   roleId            String
+  telegramChatId    String?              @unique
   defaultBaseSalary Decimal?             @db.Decimal(12, 2)
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
@@ -186,4 +187,13 @@ model SystemPriceSettings {
   updatedAt       DateTime @updatedAt
 
   @@map("system_price_settings")
+}
+
+// Telegram Bot Session for persistent serverless state
+model BotSession {
+  id        String   @id // Telegram User ID as string
+  data      Json     // Holds pending expense details & current step
+  updatedAt DateTime @updatedAt
+
+  @@map("bot_sessions")
 }

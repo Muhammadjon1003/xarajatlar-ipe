@@ -1,7 +1,7 @@
 import { Bot, InlineKeyboard, Keyboard } from 'grammy';
 import dotenv from 'dotenv';
 import { prisma } from '../lib/prisma';
-import { extractExpenseFromReceipt } from './geminiScanner';
+import { extractExpenseFromReceipt, extractExpenseFromText } from './geminiScanner';
 
 dotenv.config();
 
@@ -23,9 +23,79 @@ interface PendingExpense {
   waitingForNewCategory?: boolean;
 }
 
-// In-memory sessions
-const pendingExpenses = new Map<number, PendingExpense>();
-const authenticatedUsers = new Map<number, { id: string; name: string; role: string; phone: string }>();
+// Database-backed sessions for Serverless persistence
+async function getBotSession(userId: number): Promise<PendingExpense | null> {
+  try {
+    const session = await prisma.botSession.findUnique({
+      where: { id: String(userId) },
+    });
+    if (!session || !session.data) return null;
+    return session.data as unknown as PendingExpense;
+  } catch (err) {
+    console.error('getBotSession error:', err);
+    return null;
+  }
+}
+
+async function saveBotSession(userId: number, data: PendingExpense): Promise<void> {
+  try {
+    await prisma.botSession.upsert({
+      where: { id: String(userId) },
+      update: { data: data as any },
+      create: { id: String(userId), data: data as any },
+    });
+  } catch (err) {
+    console.error('saveBotSession error:', err);
+  }
+}
+
+async function clearBotSession(userId: number): Promise<void> {
+  try {
+    await prisma.botSession.deleteMany({
+      where: { id: String(userId) },
+    });
+  } catch (err) {
+    console.error('clearBotSession error:', err);
+  }
+}
+
+// Get or resolve authenticated employee
+async function getAuthenticatedUser(userId: number): Promise<{ id: string; name: string; role: string; phone: string } | null> {
+  try {
+    // 1. Check if employee is permanently linked by telegramChatId in PostgreSQL
+    const linked = await prisma.employee.findFirst({
+      where: { telegramChatId: String(userId), isActive: true },
+      include: { role: true },
+    });
+    if (linked) {
+      return {
+        id: linked.id,
+        name: `${linked.firstName} ${linked.lastName}`,
+        role: linked.role?.displayName || 'Xodim',
+        phone: linked.phone || '',
+      };
+    }
+
+    // 2. Fallback to Super Admin / Admin if not yet linked by contact
+    const admin = await prisma.employee.findFirst({
+      where: { role: { code: 'SUPER_ADMIN' }, isActive: true },
+      include: { role: true },
+    });
+    if (admin) {
+      return {
+        id: admin.id,
+        name: `${admin.firstName} ${admin.lastName}`,
+        role: admin.role?.displayName || 'Admin',
+        phone: admin.phone || '',
+      };
+    }
+
+    return null;
+  } catch (err) {
+    console.error('getAuthenticatedUser error:', err);
+    return null;
+  }
+}
 
 function formatUZS(amount: number): string {
   return new Intl.NumberFormat('uz-UZ').format(amount) + " so'm";
@@ -55,15 +125,16 @@ bot.command('start', async (ctx) => {
   if (!userId) return;
 
   // Clear any existing pending state
-  pendingExpenses.delete(userId);
+  await clearBotSession(userId);
 
-  const existingAuth = authenticatedUsers.get(userId);
+  const existingAuth = await getAuthenticatedUser(userId);
 
   if (existingAuth) {
     await ctx.reply(
       `👋 Assalomu alaykum, *${existingAuth.name}*!\n` +
       `💼 Lavozimingiz: *${existingAuth.role}*\n\n` +
-      `📸 Xarajat kiritish uchun chek, to‘lov kvitansiyasi (Payme, Click, Uzum) yoki schyot-faktura rasmini yuboring!\n\n` +
+      `📸 Xarajat kiritish uchun chek yoki to‘lov kvitansiyasi rasmini yuboring!\n` +
+      `✍️ Yoki oddiy matn ko‘rinishida yozib yuboring (masalan: *"Taksi 30000"*, *"Kantselyariya 150000"*).\n\n` +
       `💡 *Maslahat:* Rasm yuborayotganda izoh (caption) yozsangiz, o‘sha matn to‘g‘ridan-to‘g‘ri xarajat nomi sifatida olinadi.`,
       { parse_mode: 'Markdown' }
     );
@@ -121,19 +192,17 @@ bot.on('message:contact', async (ctx) => {
       return;
     }
 
-    // Save auth session
-    authenticatedUsers.set(userId, {
-      id: employee.id,
-      name: `${employee.firstName} ${employee.lastName}`,
-      role: employee.role.displayName,
-      phone: cleanPhone,
+    // Save telegramChatId permanently in DB
+    await prisma.employee.update({
+      where: { id: employee.id },
+      data: { telegramChatId: String(userId) },
     });
 
     await ctx.reply(
       `✅ *Xush kelibsiz, ${employee.firstName} ${employee.lastName}!* 🎉\n` +
       `💼 Lavozimingiz: *${employee.role.displayName}*\n\n` +
       `Siz muvaffaqiyatli avtorizatsiyadan o‘tdingiz.\n\n` +
-      `Endi har qanday xarajat cheki rasmini yuboring — sun'iy intellekt ma'lumotlarni avtomatik o‘qiydi! 📸\n\n` +
+      `Endi har qanday xarajat cheki rasmini yoki xarajat matnini yuboring (masalan: *"Taksi 30000"*) — sun'iy intellekt ma'lumotlarni avtomatik o‘qiydi! 📸\n\n` +
       `💡 *Maslahat:* Rasm yuborayotganda izoh (caption) qismiga xarajat nomini yozsangiz, o‘sha nom to‘g‘ridan-to‘g‘ri qabul qilinadi.`,
       {
         parse_mode: 'Markdown',
@@ -151,26 +220,12 @@ bot.on('message:photo', async (ctx) => {
   const userId = ctx.from?.id;
   if (!userId) return;
 
-  // Auto-authenticate as default admin if running in dev and not yet authenticated
-  if (!authenticatedUsers.has(userId)) {
-    const defaultAdmin = await prisma.employee.findFirst({
-      where: { role: { code: 'SUPER_ADMIN' } },
-      include: { role: true },
-    });
-    if (defaultAdmin) {
-      authenticatedUsers.set(userId, {
-        id: defaultAdmin.id,
-        name: `${defaultAdmin.firstName} ${defaultAdmin.lastName}`,
-        role: defaultAdmin.role.displayName,
-        phone: defaultAdmin.phone || '',
-      });
-    } else {
-      await ctx.reply('⚠️ Iltimos, avval /start buyrug‘ini bosib telefon raqamingizni yuboring.');
-      return;
-    }
+  const user = await getAuthenticatedUser(userId);
+  if (!user) {
+    await ctx.reply('⚠️ Iltimos, avval /start buyrug‘ini bosib telefon raqamingizni yuboring.');
+    return;
   }
 
-  const user = authenticatedUsers.get(userId)!;
   const statusMsg = await ctx.reply('🔍 *Chek tahlil qilinmoqda...* ⏳', {
     parse_mode: 'Markdown',
   });
@@ -194,8 +249,8 @@ bot.on('message:photo', async (ctx) => {
     // Requirement 1: If caption exists, use that as the expense name; otherwise take from image
     const finalExpenseName = userCaption || extracted.name;
 
-    // Save initial state
-    pendingExpenses.set(userId, {
+    // Save initial state to PostgreSQL!
+    await saveBotSession(userId, {
       photoUrl,
       name: finalExpenseName,
       value: extracted.value,
@@ -258,17 +313,18 @@ bot.on('callback_query:data', async (ctx) => {
 
   await ctx.answerCallbackQuery();
 
-  const pending = pendingExpenses.get(userId);
-
   // 1. Cancel
   if (data === 'cancel_expense') {
-    pendingExpenses.delete(userId);
-    await ctx.editMessageText('❌ Xarajat kiritish bekor qilindi. Yangi chek rasmini yuborishingiz mumkin.');
+    await clearBotSession(userId);
+    await ctx.editMessageText('❌ Xarajat kiritish bekor qilindi. Yangi chek rasmini yoki xarajat matnini yuborishingiz mumkin.');
     return;
   }
 
+  // Load session from PostgreSQL
+  const pending = await getBotSession(userId);
+
   if (!pending) {
-    await ctx.editMessageText('⚠️ Ushbu xarajat sessiyasi eskirgan. Yangi chek rasmini yuboring.');
+    await ctx.editMessageText('⚠️ Ushbu xarajat sessiyasi eskirgan yoki topilmadi. Yangi chek rasmini yoki xarajat matnini yuboring.');
     return;
   }
 
@@ -284,6 +340,9 @@ bot.on('callback_query:data', async (ctx) => {
 
     pending.branchId = branch.id;
     pending.branchName = branch.name;
+
+    // Persist updated session to PostgreSQL
+    await saveBotSession(userId, pending);
 
     // Fetch categories from DB
     const categories = await prisma.expenseCategory.findMany({
@@ -317,6 +376,7 @@ bot.on('callback_query:data', async (ctx) => {
   // 3. User clicked "➕ Kategoriya qo'shish"
   if (data === 'add_new_category') {
     pending.waitingForNewCategory = true;
+    await saveBotSession(userId, pending);
     await ctx.editMessageText(
       `➕ *Yangi toifa (kategoriya) qo‘shish*\n\n` +
       `Iltimos, yangi kategoriya nomini xabar ko‘rinishida yozib yuboring:\n` +
@@ -343,6 +403,9 @@ bot.on('callback_query:data', async (ctx) => {
     pending.categoryName = category.name;
     pending.waitingForNewCategory = false;
 
+    // Persist updated session to PostgreSQL
+    await saveBotSession(userId, pending);
+
     // Final Confirmation Keyboard
     const confirmKeyboard = new InlineKeyboard()
       .text('✅ Tasdiqlash va Saqlash', 'confirm_expense')
@@ -356,8 +419,8 @@ bot.on('callback_query:data', async (ctx) => {
       `🏢 *Filiali:* ${pending.branchName}\n` +
       `🏷️ *Toifasi:* ${pending.categoryName}\n` +
       `📅 *Sanasi:* ${pending.date}\n` +
-      `👤 *Kirituvchi:* ${pending.employeeName}\n\n` +
-      `Barcha ma'lumotlar to‘g‘ri bo‘lsa, *"Tasdiqlash"* tugmasini bosing:`,
+      `👤 *Kirituvchi:* ${pending.employeeName || 'Xodim'}\n\n` +
+      `👇 *Diqqat:* Xarajat bazaga saqlanishi uchun *"✅ Tasdiqlash va Saqlash"* tugmasini bosing:`,
       {
         parse_mode: 'Markdown',
         reply_markup: confirmKeyboard,
@@ -384,11 +447,12 @@ bot.on('callback_query:data', async (ctx) => {
           branchId: pending.branchId,
           categoryId: pending.categoryId,
           createdById: pending.employeeId,
-          receiptUrl: pending.photoUrl,
+          receiptUrl: pending.photoUrl || null,
         },
       });
 
-      pendingExpenses.delete(userId);
+      // Clear session from PostgreSQL!
+      await clearBotSession(userId);
 
       await ctx.editMessageText(
         `🎉 *Xarajat muvaffaqiyatli saqlandi!* ✅\n\n` +
@@ -399,7 +463,7 @@ bot.on('callback_query:data', async (ctx) => {
         `🏷️ *Toifa:* ${pending.categoryName}\n` +
         `📅 *Sana:* ${pending.date}\n\n` +
         `Ushbu xarajat veb-sayt va mobil ilovaning jonli hisobotlarida darhol aks etdi 📊\n\n` +
-        `Yana chek yuborishingiz mumkin 📸`,
+        `Yana yangi chek rasmini yoki matnli xarajatni yuborishingiz mumkin 📸`,
         { parse_mode: 'Markdown' }
       );
     } catch (dbError: any) {
@@ -409,21 +473,19 @@ bot.on('callback_query:data', async (ctx) => {
   }
 });
 
-// Text message handler (Handles new category input or general help)
+// Text message handler (Handles new category input, text expenses, or general help)
 bot.on('message:text', async (ctx) => {
   const userId = ctx.from?.id;
   if (!userId) return;
 
-  const pending = pendingExpenses.get(userId);
+  const rawText = ctx.message.text.trim();
+  if (!rawText || rawText.startsWith('/')) return;
 
-  // If user is inputting a new category name
+  const pending = await getBotSession(userId);
+
+  // 1. If user is inputting a new category name
   if (pending && pending.waitingForNewCategory) {
-    const rawCategoryName = ctx.message.text.trim();
-
-    if (!rawCategoryName || rawCategoryName.startsWith('/')) {
-      await ctx.reply('⚠️ Iltimos, to‘g‘ri kategoriya nomini yozing (masalan: "Xo‘jalik mollari"):');
-      return;
-    }
+    const rawCategoryName = rawText;
 
     try {
       // Find existing category (case-insensitive) or create new one in Prisma
@@ -446,6 +508,9 @@ bot.on('message:text', async (ctx) => {
       pending.categoryName = category.name;
       pending.waitingForNewCategory = false;
 
+      // Persist updated session to DB
+      await saveBotSession(userId, pending);
+
       // Show confirmation card
       const confirmKeyboard = new InlineKeyboard()
         .text('✅ Tasdiqlash va Saqlash', 'confirm_expense')
@@ -460,8 +525,8 @@ bot.on('message:text', async (ctx) => {
         `🏢 *Filiali:* ${pending.branchName}\n` +
         `🏷️ *Toifasi:* *${pending.categoryName}*\n` +
         `📅 *Sanasi:* ${pending.date}\n` +
-        `👤 *Kirituvchi:* ${pending.employeeName}\n\n` +
-        `Barcha ma'lumotlar to‘g‘ri bo‘lsa, *"Tasdiqlash"* tugmasini bosing:`,
+        `👤 *Kirituvchi:* ${pending.employeeName || 'Xodim'}\n\n` +
+        `👇 *Diqqat:* Xarajat bazaga saqlanishi uchun *"✅ Tasdiqlash va Saqlash"* tugmasini bosing:`,
         {
           parse_mode: 'Markdown',
           reply_markup: confirmKeyboard,
@@ -474,10 +539,79 @@ bot.on('message:text', async (ctx) => {
     return;
   }
 
-  // Generic message
-  await ctx.reply(
-    `📸 *Xarajat kiritish uchun chek rasmini yuboring!*\n\n` +
-    `💡 *Maslahat:* Rasm yuborayotganda izoh (caption) qismiga xarajat nomini yozsangiz, o‘sha nom avtomatik qabul qilinadi.`,
+  // 2. Check if the message is a text expense (e.g., "Taksi 30000" or "Kantselyariya 150000")
+  const user = await getAuthenticatedUser(userId);
+  if (!user) {
+    await ctx.reply('⚠️ Iltimos, avval /start buyrug‘ini bosib telefon raqamingizni yuboring.');
+    return;
+  }
+
+  const statusMsg = await ctx.reply('🔍 *Xarajat tahlil qilinmoqda...* ⏳', {
+    parse_mode: 'Markdown',
+  });
+
+  try {
+    const extracted = await extractExpenseFromText(rawText);
+
+    if (extracted && extracted.value > 0) {
+      // Save state in PostgreSQL
+      await saveBotSession(userId, {
+        name: extracted.name,
+        value: extracted.value,
+        date: extracted.date,
+        employeeId: user.id,
+        employeeName: user.name,
+        waitingForNewCategory: false,
+      });
+
+      const branches = await prisma.branch.findMany({
+        orderBy: { name: 'asc' },
+      });
+
+      if (branches.length === 0) {
+        await ctx.api.editMessageText(
+          ctx.chat.id,
+          statusMsg.message_id,
+          '⚠️ Tizimda filiallar mavjud emas. Avval veb-saytda filial qo‘shing.'
+        );
+        return;
+      }
+
+      const branchKeyboard = new InlineKeyboard();
+      branches.forEach((b, idx) => {
+        branchKeyboard.text(`🏢 ${b.name}`, `branch:${b.id}`);
+        if (idx % 2 === 1) branchKeyboard.row();
+      });
+      branchKeyboard.row().text('❌ Bekor qilish', 'cancel_expense');
+
+      const resultText =
+        `📝 *Xarajat ma'lumotlari aniqlandi:*\n\n` +
+        `📌 *Nomi:* ${extracted.name}\n` +
+        `💰 *Summasi:* *${formatUZS(extracted.value)}*\n` +
+        `📅 *Sanasi:* ${extracted.date}\n\n` +
+        `🏢 *1-qadam: Xarajat qaysi filial uchun qilindi?* Quyidagi tugmalardan birini tanlang:`;
+
+      await ctx.api.editMessageText(ctx.chat.id, statusMsg.message_id, resultText, {
+        parse_mode: 'Markdown',
+        reply_markup: branchKeyboard,
+      });
+      return;
+    }
+  } catch (err) {
+    console.warn('Text expense parsing error:', err);
+  }
+
+  // 3. If not an expense text, show helpful guidance
+  await ctx.api.editMessageText(
+    ctx.chat.id,
+    statusMsg.message_id,
+    `📸 *Xarajat kiritish uchun:*\n\n` +
+    `1️⃣ Chek yoki kvitansiya rasmini yuboring\n` +
+    `_yoki_\n` +
+    `2️⃣ Matn ko‘rinishida yozing, masalan:\n` +
+    `• \`Taksi 30000\`\n` +
+    `• \`Ofis uchun kantselyariya 150000\`\n` +
+    `• \`Obed 45000\``,
     { parse_mode: 'Markdown' }
   );
 });

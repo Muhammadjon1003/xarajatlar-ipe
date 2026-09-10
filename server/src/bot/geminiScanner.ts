@@ -117,3 +117,81 @@ Rasmdan quyidagilarni aniqlang:
   console.error('All Gemini fallback models exhausted:', lastError?.message || lastError);
   throw new Error('Chekni tahlil qilishda xatolik yuz berdi: ' + (lastError?.message || 'Server band'));
 }
+
+/**
+ * Extracts expense information from a text message (e.g., "Taksi 30000" or "Kantselyariya 150 000 so'm").
+ */
+export async function extractExpenseFromText(text: string): Promise<ExtractedExpense | null> {
+  const clean = text.trim();
+  if (!clean || clean.startsWith('/') || clean.length < 3) return null;
+
+  // Check if text contains any digit
+  const hasDigit = /\d/.test(clean);
+  if (!hasDigit) return null;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const prompt = `Siz buxgalteriya yordamchisisiz. Foydalanuvchi quyidagi matn orqali xarajat kiritmoqda:
+"${clean}"
+
+Matndan quyidagilarni aniqlang:
+1. "name": Xarajat nomi yoki maqsadi (masalan: "Taksi", "Kantselyariya", "Tushlik", "Benzin"). Agar faqat summa bo'lsa, "Xarajat" deb oling.
+2. "value": Xarajat summasi faqat so'mda musbat butun son (masalan, 30000 yoki 150000). Agar ming, mln so'zlar bo'lsa hisoblang (masalan "50 ming" -> 50000).
+3. "date": Sana YYYY-MM-DD formatida. Agar matnda sana aytilmagan bo'lsa, bugungi sanani oling: "${todayStr}".
+4. "isExpense": Matn xarajat summasi va nomini o'z ichiga olganmi? (true yoki false).`;
+
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: [{ text: prompt }],
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              value: { type: Type.NUMBER },
+              date: { type: Type.STRING },
+              isExpense: { type: Type.BOOLEAN },
+            },
+            required: ['name', 'value', 'date', 'isExpense'],
+          },
+        },
+      });
+
+      const parsed = JSON.parse(response.text || '{}');
+      if (!parsed.isExpense || !parsed.value || parsed.value <= 0) {
+        return null;
+      }
+
+      return {
+        name: parsed.name?.trim() || clean,
+        value: Math.abs(Number(parsed.value)),
+        date: parsed.date || todayStr,
+        confidence: 'HIGH',
+      };
+    } catch (err: any) {
+      console.warn(`⚠️ Text extraction model ${model} failed: ${err?.message || err}`);
+    }
+  }
+
+  // Fast fallback regex if API was unresponsive
+  const match = clean.match(/^(.+?)\s+(\d[\d\s.,]*)(?:\s*so'?m)?$/i) || clean.match(/^(\d[\d\s.,]*)(?:\s*so'?m)?\s+(.+)$/i);
+  if (match) {
+    const isFirstNum = /^\d/.test(match[1]);
+    const numPart = (isFirstNum ? match[1] : match[2]).replace(/[^\d]/g, '');
+    const namePart = (isFirstNum ? match[2] : match[1]).trim();
+    const val = parseInt(numPart, 10);
+    if (val > 0 && namePart) {
+      return {
+        name: namePart,
+        value: val,
+        date: todayStr,
+        confidence: 'MEDIUM',
+      };
+    }
+  }
+
+  return null;
+}
