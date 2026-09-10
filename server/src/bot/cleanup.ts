@@ -1,12 +1,12 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const token = process.env.TELEGRAM_BOT_TOKEN;
-
-if (!token) {
-  console.error('❌ TELEGRAM_BOT_TOKEN not found in environment');
-  process.exit(1);
-}
+const DEFAULT_BOT_TOKEN = '8900984246:AAEZA3BPqzsFRadEt1wgwB6DcQfKRC0sLQQ';
+const envToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+const token =
+  envToken && !envToken.includes('AAFs5_BMAVXZYgydv8y_GyM1hm8aIYNC9eQ')
+    ? envToken
+    : DEFAULT_BOT_TOKEN;
 
 async function cleanupBot() {
   console.log('🧹 Cleaning up old bot webhooks, commands, and menus...');
