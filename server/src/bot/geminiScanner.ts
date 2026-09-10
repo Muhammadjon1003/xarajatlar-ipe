@@ -14,13 +14,69 @@ export interface ExtractedExpense {
   rawNote?: string;
 }
 
-// Fallback models in priority order for maximum speed (<1s) and high reliability
+// Fallback models in priority order for maximum speed (<1.5s) and high reliability
 const CANDIDATE_MODELS = [
-  'gemini-flash-latest',
   'gemini-flash-lite-latest',
-  'gemini-3.6-flash',
   'gemini-3.1-flash-lite',
+  'gemini-flash-latest',
 ];
+
+/**
+ * Fast helper to prevent any single model call from blocking for more than `ms` milliseconds.
+ */
+function timeoutPromise<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms);
+    promise.then(
+      (res) => { clearTimeout(timer); resolve(res); },
+      (err) => { clearTimeout(timer); reject(err); }
+    );
+  });
+}
+
+/**
+ * Instant regex parser for receipt captions (e.g. "Karam uchun 100000" or "50 ming obed").
+ * Completes in <1ms without calling any AI model!
+ */
+export function parseExpenseFromCaption(caption?: string): ExtractedExpense | null {
+  if (!caption) return null;
+  const clean = caption.trim();
+  if (!clean || !/\d/.test(clean)) return null;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Regex 1: "Name 100000" or "Name 100 000 so'm" or "Name 50 ming"
+  const matchEnd = clean.match(/^(.+?)\s+([0-9][0-9\s.,]*)(?:\s*(so'?m|sum|ming|k))?$/i);
+  if (matchEnd) {
+    const name = matchEnd[1].trim();
+    let numStr = matchEnd[2].replace(/[^\d]/g, '');
+    let val = parseInt(numStr, 10);
+    const unit = (matchEnd[3] || '').toLowerCase();
+    if ((unit.includes('ming') || unit === 'k') && val < 100000) {
+      val *= 1000;
+    }
+    if (val > 0 && name && name.length >= 2) {
+      return { name, value: val, date: todayStr, confidence: 'HIGH' };
+    }
+  }
+
+  // Regex 2: "100000 Name" or "100 000 so'm Name"
+  const matchStart = clean.match(/^([0-9][0-9\s.,]*)(?:\s*(so'?m|sum|ming|k))?\s+(.+)$/i);
+  if (matchStart) {
+    let numStr = matchStart[1].replace(/[^\d]/g, '');
+    let val = parseInt(numStr, 10);
+    const unit = (matchStart[2] || '').toLowerCase();
+    const name = matchStart[3].trim();
+    if ((unit.includes('ming') || unit === 'k') && val < 100000) {
+      val *= 1000;
+    }
+    if (val > 0 && name && name.length >= 2) {
+      return { name, value: val, date: todayStr, confidence: 'HIGH' };
+    }
+  }
+
+  return null;
+}
 
 /**
  * Uses Google Gemini (with automatic fast multi-model fallback) to extract expense data.
@@ -32,8 +88,14 @@ export async function extractExpenseFromReceipt(
 ): Promise<ExtractedExpense> {
   const todayStr = new Date().toISOString().split('T')[0];
 
+  // If user caption already has amount, return instantly!
+  const captionParsed = parseExpenseFromCaption(userCaption);
+  if (captionParsed) {
+    return captionParsed;
+  }
+
   const captionHint = userCaption?.trim()
-    ? `\nIzoh: Foydalanuvchi quyidagi izohni yuborgan: "${userCaption.trim()}". Xarajat nomi sifatida asosan ushbu izohdan foydalaning.`
+    ? `\nIzoh: Foydalanuvchi quyidagi izohni yuborgan: "${userCaption.trim()}". Xarajat nomi sifatida ushbu izohni oling.`
     : '';
 
   const prompt = `Siz buxgalteriya va cheklarni skaner qiluvchi tezkor sun'iy intellektsiz.
@@ -49,19 +111,20 @@ Rasmdan quyidagilarni aniqlang:
 
   for (const model of CANDIDATE_MODELS) {
     try {
-      console.log(`🤖 Attempting OCR with model: ${model}...`);
+      console.log(`🤖 Attempting fast OCR with model: ${model}...`);
 
-      const response = await ai.models.generateContent({
-        model,
-        contents: [
-          {
-            inlineData: {
-              mimeType,
-              data: imageBuffer.toString('base64'),
+      const response = await timeoutPromise(
+        ai.models.generateContent({
+          model,
+          contents: [
+            {
+              inlineData: {
+                mimeType,
+                data: imageBuffer.toString('base64'),
+              },
             },
-          },
-          { text: prompt },
-        ],
+            { text: prompt },
+          ],
           config: {
             responseMimeType: 'application/json',
             responseSchema: {
@@ -91,28 +154,37 @@ Rasmdan quyidagilarni aniqlang:
               required: ['name', 'value', 'date'],
             },
           },
-        });
+        }),
+        6000 // 6 seconds max timeout per model!
+      );
 
-        const parsed = JSON.parse(response.text || '{}');
+      const parsed = JSON.parse(response.text || '{}');
 
-        console.log(`✅ OCR successful using model: ${model}`);
+      console.log(`✅ OCR successful using model: ${model}`);
 
-        return {
-          name: parsed.name || (userCaption?.trim() || 'Nomaʼlum xarajat'),
-          value: Math.abs(Number(parsed.value) || 0),
-          date: parsed.date || todayStr,
-          confidence: parsed.confidence || 'MEDIUM',
-          rawNote: parsed.rawNote || '',
-        };
-      } catch (err: any) {
-        lastError = err;
-        console.warn(`⚠️ Model ${model} failed: ${err?.message || err}`);
-        // If high demand or rate limit, brief pause then immediately try next model
-        if (err?.message?.includes('503') || err?.message?.includes('429')) {
-          await new Promise((res) => setTimeout(res, 400));
-        }
-      }
+      return {
+        name: parsed.name || (userCaption?.trim() || 'Nomaʼlum xarajat'),
+        value: Math.abs(Number(parsed.value) || 0),
+        date: parsed.date || todayStr,
+        confidence: parsed.confidence || 'MEDIUM',
+        rawNote: parsed.rawNote || '',
+      };
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`⚠️ Model ${model} failed or timed out: ${err?.message || err}`);
     }
+  }
+
+  // Fallback: If OCR failed but user supplied a caption, use that caption with 0 value or default
+  if (userCaption && userCaption.trim().length >= 2) {
+    return {
+      name: userCaption.trim(),
+      value: 0,
+      date: todayStr,
+      confidence: 'LOW',
+      rawNote: 'Rasmdan summa o‘qilmadi, izohdan olindi',
+    };
+  }
 
   console.error('All Gemini fallback models exhausted:', lastError?.message || lastError);
   throw new Error('Chekni tahlil qilishda xatolik yuz berdi: ' + (lastError?.message || 'Server band'));
@@ -142,23 +214,26 @@ Matndan quyidagilarni aniqlang:
 
   for (const model of CANDIDATE_MODELS) {
     try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: [{ text: prompt }],
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              name: { type: Type.STRING },
-              value: { type: Type.NUMBER },
-              date: { type: Type.STRING },
-              isExpense: { type: Type.BOOLEAN },
+      const response = await timeoutPromise(
+        ai.models.generateContent({
+          model,
+          contents: [{ text: prompt }],
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                value: { type: Type.NUMBER },
+                date: { type: Type.STRING },
+                isExpense: { type: Type.BOOLEAN },
+              },
+              required: ['name', 'value', 'date', 'isExpense'],
             },
-            required: ['name', 'value', 'date', 'isExpense'],
           },
-        },
-      });
+        }),
+        5000 // 5 seconds max
+      );
 
       const parsed = JSON.parse(response.text || '{}');
       if (!parsed.isExpense || !parsed.value || parsed.value <= 0) {

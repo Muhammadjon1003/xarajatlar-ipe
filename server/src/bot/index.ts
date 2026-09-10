@@ -1,7 +1,7 @@
 import { Bot, InlineKeyboard, Keyboard } from 'grammy';
 import dotenv from 'dotenv';
 import { prisma } from '../lib/prisma';
-import { extractExpenseFromReceipt, extractExpenseFromText } from './geminiScanner';
+import { extractExpenseFromReceipt, extractExpenseFromText, parseExpenseFromCaption, ExtractedExpense } from './geminiScanner';
 
 dotenv.config();
 
@@ -248,28 +248,47 @@ bot.on('message:photo', async (ctx) => {
     return;
   }
 
-  const statusMsg = await ctx.reply('🔍 *Chek tahlil qilinmoqda...* ⏳', {
-    parse_mode: 'Markdown',
-  });
+  const userCaption = ctx.message.caption?.trim();
+  const photos = ctx.message.photo;
+  const highRes = photos[photos.length - 1];
+
+  // Fast path: if caption already specifies name and amount (e.g. "Karam uchun 100000"), parse immediately in <1ms!
+  const captionParsed = parseExpenseFromCaption(userCaption);
+
+  let extracted: ExtractedExpense;
+  let finalExpenseName: string;
+  let photoUrl: string | undefined;
 
   try {
-    // Check if user provided an image caption
-    const userCaption = ctx.message.caption?.trim();
+    const file = await ctx.api.getFile(highRes.file_id);
+    photoUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
 
-    // Get highest resolution photo
-    const photo = ctx.message.photo[ctx.message.photo.length - 1];
-    const file = await ctx.api.getFile(photo.file_id);
-    const photoUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+    if (captionParsed) {
+      extracted = captionParsed;
+      finalExpenseName = captionParsed.name;
+    } else {
+      const statusMsg = await ctx.reply('🔍 *Chek tahlil qilinmoqda...* ⏳', {
+        parse_mode: 'Markdown',
+      });
 
-    // Download image buffer
-    const imgRes = await fetch(photoUrl);
-    const buffer = Buffer.from(await imgRes.arrayBuffer());
+      // Pick medium photo (~800px) for OCR to download 10x faster (<0.2s)
+      const ocrPhoto = photos.length > 2 ? photos[Math.min(1, photos.length - 2)] : photos[0];
+      const ocrFile = await ctx.api.getFile(ocrPhoto.file_id);
+      const ocrUrl = `https://api.telegram.org/file/bot${token}/${ocrFile.file_path}`;
 
-    // Extract using Gemini (with automatic multi-model fallback)
-    const extracted = await extractExpenseFromReceipt(buffer, 'image/jpeg', userCaption);
+      const imgRes = await fetch(ocrUrl);
+      const buffer = Buffer.from(await imgRes.arrayBuffer());
 
-    // Requirement 1: If caption exists, use that as the expense name; otherwise take from image
-    const finalExpenseName = userCaption || extracted.name;
+      extracted = await extractExpenseFromReceipt(buffer, 'image/jpeg', userCaption);
+      finalExpenseName = userCaption || extracted.name;
+
+      // Delete temporary loading message
+      try {
+        await ctx.api.deleteMessage(ctx.chat.id, statusMsg.message_id);
+      } catch (e) {
+        // ignore
+      }
+    }
 
     // Save initial state to PostgreSQL!
     await saveBotSession(userId, {
@@ -288,11 +307,7 @@ bot.on('message:photo', async (ctx) => {
     });
 
     if (branches.length === 0) {
-      await ctx.api.editMessageText(
-        ctx.chat.id,
-        statusMsg.message_id,
-        '⚠️ Tizimda filiallar mavjud emas. Avval veb-saytda filial qo‘shing.'
-      );
+      await ctx.reply('⚠️ Tizimda filiallar mavjud emas. Avval veb-saytda filial qo‘shing.');
       return;
     }
 
@@ -308,20 +323,18 @@ bot.on('message:photo', async (ctx) => {
 
     const resultText =
       `🧾 *Chek ma'lumotlari aniqlandi:*\n\n` +
-      `📝 *Nomi:* ${finalExpenseName}${captionNotice}\n` +
+      `📝 *Nomi:* ${escapeMarkdown(finalExpenseName)}${captionNotice}\n` +
       `💰 *Summasi:* *${formatUZS(extracted.value)}*\n` +
       `📅 *Sanasi:* ${extracted.date}\n\n` +
       `🏢 *1-qadam: Xarajat qaysi filial uchun qilindi?* Quyidagi tugmalardan birini tanlang:`;
 
-    await ctx.api.editMessageText(ctx.chat.id, statusMsg.message_id, resultText, {
+    await ctx.reply(resultText, {
       parse_mode: 'Markdown',
       reply_markup: branchKeyboard,
     });
   } catch (error: any) {
     console.error('Photo processing error:', error);
-    await ctx.api.editMessageText(
-      ctx.chat.id,
-      statusMsg.message_id,
+    await ctx.reply(
       `❌ *Chekni o‘qishda xatolik:*\n${error?.message || 'Noma\'lum xatolik'}\n\nIltimos, qayta urinib ko‘ring yoki sifatliroq rasm yuboring.`
     );
   }
