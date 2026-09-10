@@ -25,8 +25,14 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// 24/7 Telegram Cloud Webhook on Vercel
-app.use('/api/telegram', webhookCallback(bot, 'express'));
+// 24/7 Telegram Cloud Webhook on Vercel (60s serverless timeout)
+app.use(
+  '/api/telegram',
+  webhookCallback(bot, 'express', {
+    timeoutMilliseconds: 60000,
+    onTimeout: 'return',
+  })
+);
 
 // Endpoint to view or trigger webhook registration
 app.get('/api/telegram-webhook/setup', async (_req, res) => {

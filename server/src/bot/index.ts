@@ -101,6 +101,28 @@ function formatUZS(amount: number): string {
   return new Intl.NumberFormat('uz-UZ').format(amount) + " so'm";
 }
 
+function escapeMarkdown(text: string): string {
+  if (!text) return '';
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+}
+
+async function safeEditMessageText(ctx: any, text: string, options?: any) {
+  try {
+    await ctx.editMessageText(text, options);
+  } catch (err: any) {
+    const msg = err?.message || '';
+    if (msg.includes('message is not modified')) {
+      return;
+    }
+    console.warn('safeEditMessageText failed, falling back to ctx.reply:', err?.message || err);
+    try {
+      await ctx.reply(text, options);
+    } catch (replyErr) {
+      console.error('safeEditMessageText fallback reply also failed:', replyErr);
+    }
+  }
+}
+
 // Deduplicate updates to prevent double processing from Telegram webhook retries
 const processedUpdates = new Set<number>();
 bot.use(async (ctx, next) => {
@@ -311,12 +333,16 @@ bot.on('callback_query:data', async (ctx) => {
   const data = ctx.callbackQuery.data;
   if (!userId) return;
 
-  await ctx.answerCallbackQuery();
+  try {
+    await ctx.answerCallbackQuery();
+  } catch (e) {
+    // Ignore expired or already answered callback queries
+  }
 
   // 1. Cancel
   if (data === 'cancel_expense') {
     await clearBotSession(userId);
-    await ctx.editMessageText('❌ Xarajat kiritish bekor qilindi. Yangi chek rasmini yoki xarajat matnini yuborishingiz mumkin.');
+    await safeEditMessageText(ctx, '❌ Xarajat kiritish bekor qilindi. Yangi chek rasmini yoki xarajat matnini yuborishingiz mumkin.');
     return;
   }
 
@@ -324,7 +350,7 @@ bot.on('callback_query:data', async (ctx) => {
   const pending = await getBotSession(userId);
 
   if (!pending) {
-    await ctx.editMessageText('⚠️ Ushbu xarajat sessiyasi eskirgan yoki topilmadi. Yangi chek rasmini yoki xarajat matnini yuboring.');
+    await safeEditMessageText(ctx, '⚠️ Ushbu xarajat sessiyasi eskirgan yoki topilmadi. Yangi chek rasmini yoki xarajat matnini yuboring.');
     return;
   }
 
@@ -360,10 +386,11 @@ bot.on('callback_query:data', async (ctx) => {
     catKeyboard.row().text('➕ Kategoriya qo‘shish', 'add_new_category');
     catKeyboard.row().text('❌ Bekor qilish', 'cancel_expense');
 
-    await ctx.editMessageText(
-      `🧾 *Xarajat:* ${pending.name}\n` +
+    await safeEditMessageText(
+      ctx,
+      `🧾 *Xarajat:* ${escapeMarkdown(pending.name)}\n` +
       `💰 *Summa:* ${formatUZS(pending.value)}\n` +
-      `🏢 *Tanlangan filial:* *${branch.name}*\n\n` +
+      `🏢 *Tanlangan filial:* *${escapeMarkdown(branch.name)}*\n\n` +
       `🏷️ *2-qadam: Xarajat toifasini (kategoriyasini) tanlang:*`,
       {
         parse_mode: 'Markdown',
@@ -377,7 +404,8 @@ bot.on('callback_query:data', async (ctx) => {
   if (data === 'add_new_category') {
     pending.waitingForNewCategory = true;
     await saveBotSession(userId, pending);
-    await ctx.editMessageText(
+    await safeEditMessageText(
+      ctx,
       `➕ *Yangi toifa (kategoriya) qo‘shish*\n\n` +
       `Iltimos, yangi kategoriya nomini xabar ko‘rinishida yozib yuboring:\n` +
       `_(Masalan: "Kantselyariya", "Ofis ta'miri", "Mebel", "Xo‘jalik mollari")_`,
@@ -412,14 +440,15 @@ bot.on('callback_query:data', async (ctx) => {
       .row()
       .text('❌ Bekor qilish', 'cancel_expense');
 
-    await ctx.editMessageText(
+    await safeEditMessageText(
+      ctx,
       `📋 *Xarajat ma'lumotlarini tasdiqlaysizmi?*\n\n` +
-      `📝 *Nomi:* ${pending.name}\n` +
+      `📝 *Nomi:* ${escapeMarkdown(pending.name)}\n` +
       `💰 *Summasi:* *${formatUZS(pending.value)}*\n` +
-      `🏢 *Filiali:* ${pending.branchName}\n` +
-      `🏷️ *Toifasi:* ${pending.categoryName}\n` +
+      `🏢 *Filiali:* ${escapeMarkdown(pending.branchName || '')}\n` +
+      `🏷️ *Toifasi:* ${escapeMarkdown(pending.categoryName || '')}\n` +
       `📅 *Sanasi:* ${pending.date}\n` +
-      `👤 *Kirituvchi:* ${pending.employeeName || 'Xodim'}\n\n` +
+      `👤 *Kirituvchi:* ${escapeMarkdown(pending.employeeName || 'Xodim')}\n\n` +
       `👇 *Diqqat:* Xarajat bazaga saqlanishi uchun *"✅ Tasdiqlash va Saqlash"* tugmasini bosing:`,
       {
         parse_mode: 'Markdown',
@@ -454,13 +483,14 @@ bot.on('callback_query:data', async (ctx) => {
       // Clear session from PostgreSQL!
       await clearBotSession(userId);
 
-      await ctx.editMessageText(
+      await safeEditMessageText(
+        ctx,
         `🎉 *Xarajat muvaffaqiyatli saqlandi!* ✅\n\n` +
         `🆔 *ID:* \`#${created.id.slice(0, 8)}\`\n` +
-        `📝 *Nomi:* ${created.name}\n` +
+        `📝 *Nomi:* ${escapeMarkdown(created.name)}\n` +
         `💰 *Summa:* *${formatUZS(Number(created.value))}*\n` +
-        `🏢 *Filial:* ${pending.branchName}\n` +
-        `🏷️ *Toifa:* ${pending.categoryName}\n` +
+        `🏢 *Filial:* ${escapeMarkdown(pending.branchName || '')}\n` +
+        `🏷️ *Toifa:* ${escapeMarkdown(pending.categoryName || '')}\n` +
         `📅 *Sana:* ${pending.date}\n\n` +
         `Ushbu xarajat veb-sayt va mobil ilovaning jonli hisobotlarida darhol aks etdi 📊\n\n` +
         `Yana yangi chek rasmini yoki matnli xarajatni yuborishingiz mumkin 📸`,
@@ -468,7 +498,7 @@ bot.on('callback_query:data', async (ctx) => {
       );
     } catch (dbError: any) {
       console.error('Database save error:', dbError);
-      await ctx.editMessageText('❌ Ma\'lumotlar bazasiga saqlashda xatolik yuz berdi: ' + (dbError?.message || 'DB Error'));
+      await safeEditMessageText(ctx, '❌ Ma\'lumotlar bazasiga saqlashda xatolik yuz berdi: ' + (dbError?.message || 'DB Error'));
     }
   }
 });
