@@ -5,12 +5,7 @@ import { extractExpenseFromReceipt, extractExpenseFromText, parseExpenseFromCapt
 
 dotenv.config();
 
-const DEFAULT_BOT_TOKEN = '8900984246:AAEZA3BPqzsFRadEt1wgwB6DcQfKRC0sLQQ';
-const envToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
-const token =
-  envToken && !envToken.includes('AAFs5_BMAVXZYgydv8y_GyM1hm8aIYNC9eQ')
-    ? envToken
-    : DEFAULT_BOT_TOKEN;
+const token = process.env.TELEGRAM_BOT_TOKEN || '';
 
 export const bot = new Bot(token);
 
